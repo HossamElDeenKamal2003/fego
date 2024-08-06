@@ -2,6 +2,7 @@ const Driver = require('../../model/regestration/driverModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+//import upload from '../../middlewares/fiels'; // Import the upload middleware
 
 // Sign-up function
 const signup = async function(req, res) {
@@ -28,10 +29,6 @@ const signup = async function(req, res) {
             return res.status(400).json({ message: 'Both images are required' });
         }
 
-        const hostname = `${req.protocol}://${req.get('host')}`;
-        const licenseImageUrl = `${hostname}/uploads/images/${path.basename(licenseImage)}`;
-        const driverLicenceImageUrl = `${hostname}/uploads/images/${path.basename(driver_licence_image)}`;
-
         const existingUser = await Driver.findOne({ $or: [{ email }, { phoneNumber }, { id }] });
         if (existingUser) {
             return res.status(400).json({ message: 'User already exists' });
@@ -46,8 +43,8 @@ const signup = async function(req, res) {
             email,
             id,
             carModel,
-            licenseImage: licenseImageUrl,
-            driver_licence_image: driverLicenceImageUrl,
+            licenseImage: licenseImage,
+            driver_licence_image: driver_licence_image,
             licence_expire_date,
             vehicleType,
             password: hashedPassword
@@ -73,8 +70,8 @@ const signup = async function(req, res) {
             }
         });
     } catch (error) {
-        console.error('Signup error:', error);
-        return res.status(500).json(error.message);
+        console.error('Signup error:', error); // Ensure the full error object is logged
+        return res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
 
