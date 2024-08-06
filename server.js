@@ -14,7 +14,7 @@ const path = require('path');
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
-app.use('/uploads/images', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads/images', express.static(path.join(__dirname, 'uploads/images')));
 
 
 // Set the directory where EJS views are located
