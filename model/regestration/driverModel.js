@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const driverSchema = new mongoose.Schema({
     username: {
@@ -17,7 +17,7 @@ const driverSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    
+
     email: {
         type: String,
         required: true,
