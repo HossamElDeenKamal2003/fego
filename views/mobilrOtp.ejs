@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+</head>
+<body>
+    <h1>Enter your mobile number</h1>
+    <form action="/auth/send-otp" method="POST">
+        <input type="text" name="phoneNumber" placeholder="Enter your mobile number" required>
+        <button type="submit">Send OTP</button>
+    </form>
+</body>
+</html>
