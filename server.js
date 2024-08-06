@@ -68,7 +68,7 @@ app.use('/book', book);
 
 // Define a root route to serve an EJS page (optional)
 app.get('/', (req, res) => {
-    res.render('index', { title: 'Home' });
+    res.send('Express');
 });
 
 // Start the server
