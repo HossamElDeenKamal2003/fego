@@ -2,7 +2,7 @@ const axios = require('axios');
 const User = require('../../model/regestration/userModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // For generating random OTP
-const bcrypt = require('bcryptjs'); // Make sure to install bcryptjs
+const bcrypt = require('bcrypt'); // Make sure to install bcryptjs
 
 // SMSMISR API configuration
 const SMSMISR_API_URL = 'https://smsmisr.com/api/OTP/';
@@ -55,7 +55,7 @@ const signUp = async (req, res) => {
             username,
             email,
             phoneNumber,
-            password,
+            password: bcrypt.hashSync(req.body.password, 10)
         });
         await newUser.save();
 
@@ -134,8 +134,8 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'User not found' });
         }
 
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
+        const valid = bcrypt.compareSync(password, user.password);
+        if (!valid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
 

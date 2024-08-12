@@ -1,7 +1,8 @@
 const Driver = require('../../model/regestration/driverModel');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const path = require('path');
+const driverFind = require('../../model/booking/driversDestination');
 //import upload from '../../middlewares/fiels'; // Import the upload middleware
 
 // Sign-up function
@@ -15,10 +16,12 @@ const signup = async function(req, res) {
             carModel,
             licence_expire_date,
             vehicleType,
-            password
+            password,
+            latitude,
+            longitude
         } = req.body;
 
-        if (!username || !email || !carModel || !licence_expire_date || !password || !id) {
+        if (!username || !email || !carModel || !licence_expire_date || !password || !id || !latitude || !longitude) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
@@ -34,8 +37,6 @@ const signup = async function(req, res) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
 
         const newDriver = new Driver({
             username,
@@ -47,10 +48,23 @@ const signup = async function(req, res) {
             driver_licence_image: driver_licence_image,
             licence_expire_date,
             vehicleType,
-            password: hashedPassword
+            password: bcrypt.hashSync(req.body.password, 10),
         });
 
         await newDriver.save();
+
+        const driverLocation = new driverFind({
+            driverId: newDriver._id,
+            username: newDriver.username,
+            carModel: newDriver.carModel,
+            vehicleType: newDriver.vehicleType,
+            location: {
+                type: "Point",
+                coordinates: [longitude, latitude]
+            }
+        });
+
+        await driverLocation.save();
 
         const token = jwt.sign({ id: newDriver._id, username: newDriver.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
@@ -67,6 +81,8 @@ const signup = async function(req, res) {
                 driver_licence_image: newDriver.driver_licence_image,
                 licence_expire_date: newDriver.licence_expire_date,
                 vehicleType: newDriver.vehicleType,
+                location: driverLocation.location, // Return location as well
+                driverId: driverLocation.driverId
             }
         });
     } catch (error) {
@@ -89,8 +105,8 @@ const login = async function(req, res) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
+        const valid = bcrypt.compareSync(password, user.password);
+        if (!valid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
 
@@ -113,11 +129,10 @@ const login = async function(req, res) {
         });
     } catch (error) {
         console.error('Login error:', error);
-        console.log(error.message);
-
-        return res.status(500).json(error.message);
+        return res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
+
 
 // Update password function
 const updatePassword = async function(req, res) {

@@ -1,37 +1,39 @@
-const Driver = require('../../model/regestration/driverModel'); // Adjust the path as necessary
+const mongoose = require('mongoose');
+const DestDriver = require('../../model/booking/driversDestination');
+const io = require('../../server'); 
 
-// Controller function to update driver's location
-const updateDriverLocation = async (req, res) => {
-    const { driverId, type, coordinates } = req.body;
+const updateLocation = async (req, res) => {
+    const { driverId, longitude, latitude } = req.body;
 
-    if (!driverId || !type || !coordinates) {
-        return res.status(400).json({ message: 'Driver ID, location type, and coordinates are required' });
+    if (!driverId || longitude === undefined || latitude === undefined) {
+        return res.status(400).json({ message: 'Driver ID, longitude, and latitude are required' });
     }
 
-    // Ensure coordinates are an array of numbers
-    const parsedCoordinates = coordinates.split(',').map(Number);
-    
-    if (parsedCoordinates.length !== 2) {
-        return res.status(400).json({ message: 'Coordinates must be an array of two numbers [longitude, latitude]' });
+    if (!mongoose.isValidObjectId(driverId)) {
+        return res.status(400).json({ message: 'Invalid Driver ID' });
     }
 
     try {
-        const updatedDriver = await Driver.findByIdAndUpdate(
-            driverId,
-            { currentLocation: { type, coordinates: parsedCoordinates } },
-            { new: true, runValidators: true }
+        const result = await DestDriver.findOneAndUpdate(
+            { _id: driverId },
+            { location: { type: "Point", coordinates: [longitude, latitude] } },
+            { new: true }
         );
 
-        if (!updatedDriver) {
+        if (!result) {
             return res.status(404).json({ message: 'Driver not found' });
         }
 
-        res.status(200).json(updatedDriver);
+        // Emit event to notify all clients or specific clients about the location update
+        io.emit('driverLocationUpdated', result);
+
+        res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating location', error: error.message });
+        console.error('Error updating location:', error);
+        res.status(500).json({ message: error.message });
     }
 };
 
 module.exports = {
-    updateDriverLocation,
+    updateLocation,
 };

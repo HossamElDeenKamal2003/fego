@@ -1,4 +1,4 @@
-const bookModel = require('../../models/booking/userBooking');
+const bookModel = require('../../model/booking/userBooking');
 
 
 // Update booking status
