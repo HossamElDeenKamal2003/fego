@@ -124,6 +124,7 @@ const login = async function(req, res) {
             token,
             driver: {
                 id: user._id,
+                profile_image: user.profile_image,
                 username: user.username,
                 email: user.email,
                 phoneNumber: user.phoneNumber,
