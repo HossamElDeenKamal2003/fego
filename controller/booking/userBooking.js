@@ -3,7 +3,7 @@ const bookModel = require('../../model/booking/userBooking');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
 const io = require('socket.io');
-const { io } = require('../../server.js'); // Adjust this import according to your setup
+//const { io } = require('../../server.js'); // Adjust this import according to your setup
 
 // Find nearby drivers
 const findDrivers = async (data) => {
