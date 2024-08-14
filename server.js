@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
     // Handle 'findDrivers' event from the client
     socket.on('findDrivers', async (data) => {
         const { vehicleType, latitude, longitude } = data;
-
+        console.log(vehicleType, latitude, longitude);
         try {
             const drivers = await findDrivers(vehicleType, latitude, longitude);
 

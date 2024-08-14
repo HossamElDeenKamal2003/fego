@@ -5,13 +5,72 @@ const detailTrip = require('../../model/regestration/driverModel.js');
 const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
 
-// Find nearby drivers
-const findDrivers = async (req, res) => {
-    const { vehicleType, latitude, longitude } = req.body;
+// const findDriversInternal = async function(req,res, vehicleType, latitude, longitude){
+//     try{
 
+//     }
+//     catch(error){
+//         console.log(error);
+//     }
+// }
+// Find nearby drivers
+// const findDrivers = async (req, res) => {
+//     const { vehicleType, latitude, longitude } = req.body;
+
+//     // Validate input
+//     if (!vehicleType || latitude === undefined || longitude === undefined) {
+//         return res.status(400).json({ error: 'Vehicle type, latitude, and longitude are required' });
+//     }
+
+//     try {
+//         // First, check for drivers with the matching vehicle type
+//         const vehicles = await driverDestination.find({ vehicleType });
+        
+//         if (vehicles.length === 0) {
+//             return res.status(404).json({ error: 'No vehicles match your choice' });
+//         }
+
+//         // Now, find nearby drivers based on location and vehicle type
+//         const drivers = await driverDestination.find({
+//             vehicleType,
+//             location: {
+//                 $near: {
+//                     $geometry: {
+//                         type: "Point",
+//                         coordinates: [longitude, latitude]
+//                     },
+//                     $maxDistance: 5000 // Distance in meters, 5km = 5000m
+//                 }
+//             }
+//         });
+
+//         if (drivers.length === 0) {
+//             return res.status(404).json({ error: 'No drivers available in your area' });
+//         }
+
+//         // Find detailed information for each nearby driver
+//         const driverDetails = await Promise.all(
+//             drivers.map(async (driver) => {
+//                 const detail = await detailTrip.findOne({ _id: driver.driverId });
+//                 return {
+//                     ...driver.toObject(),
+//                     ...detail?.toObject() // Use optional chaining to avoid errors if detail is not found
+//                 };
+//             })
+//         );
+
+//         // Emit driver details to all connected clients via WebSocket
+//         global.io.emit('driversFound', driverDetails);
+//         return res.status(200).json(driverDetails);
+//     } catch (error) {
+//         console.error('Error finding drivers:', error);
+//         return res.status(500).json({ error: 'INTERNAL SERVER ERROR' });
+//     }
+// }
+const findDrivers = async (vehicleType, latitude, longitude) => {
     // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
-        return res.status(400).json({ error: 'Vehicle type, latitude, and longitude are required' });
+        throw new Error('Vehicle type, latitude, and longitude are required');
     }
 
     try {
@@ -19,7 +78,7 @@ const findDrivers = async (req, res) => {
         const vehicles = await driverDestination.find({ vehicleType });
         
         if (vehicles.length === 0) {
-            return res.status(404).json({ error: 'No vehicles match your choice' });
+            throw new Error('No vehicles match your choice');
         }
 
         // Now, find nearby drivers based on location and vehicle type
@@ -37,7 +96,7 @@ const findDrivers = async (req, res) => {
         });
 
         if (drivers.length === 0) {
-            return res.status(404).json({ error: 'No drivers available in your area' });
+            throw new Error('No drivers available in your area');
         }
 
         // Find detailed information for each nearby driver
@@ -51,15 +110,12 @@ const findDrivers = async (req, res) => {
             })
         );
 
-        // Emit driver details to all connected clients via WebSocket
-        global.io.emit('driversFound', driverDetails);
         return res.status(200).json(driverDetails);
     } catch (error) {
         console.error('Error finding drivers:', error);
-        return res.status(500).json({ error: 'INTERNAL SERVER ERROR' });
+        throw error;
     }
 }
-
 // Book a trip
 const bookTrip = async (req, res) => {
     const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost } = req.body;
@@ -348,6 +404,10 @@ const cost = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+const allTrips = async function(req, res){
+
+}
 
 module.exports = {
     findDrivers,
