@@ -6,12 +6,17 @@ const path = require('path');
 const dotenv = require('dotenv');
 const multer = require('multer');
 const fs = require('fs');
+const http = require('http');
+const { Server } = require('socket.io');
+const { findDriversInternal } = require('./controller/booking/userBooking');
 
 // Load environment variables
 dotenv.config();
 
 // Create Express app
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
 // Middleware setup
 app.use(cors());
@@ -22,7 +27,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware for logging HTTP requests
-app.use(morgan('combined')); // Using 'combined' format for detailed logging
+app.use(morgan('combined'));
 
 // Connect to MongoDB
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -40,8 +45,7 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure Multer for local file storage (if needed)
-// If using Cloudinary, this might not be necessary
+// Configure Multer for local file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, uploadDir);
@@ -60,6 +64,7 @@ const book = require('./router/bookTrip/bookingRouting');
 const userProfile = require('./router/userProfile/patchUser');
 const driverProfile = require('./router/userProfile/patchDriver');
 const prices = require('./router/bookTrip/priceRouter');
+
 // Middleware for static files
 app.use('/uploads', express.static(uploadDir));
 
@@ -70,14 +75,44 @@ app.use('/book', book);
 app.use('/user-profile', userProfile);
 app.use('/driverprofile', driverProfile);
 app.use('/prices', prices);
+
 // Define a root route to serve an EJS page (optional)
 app.get('/', (req, res) => {
     res.send('Express');
 });
 
+// Handle WebSocket connections
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    // Handle 'findDrivers' event from the client
+    socket.on('findDrivers', async (data) => {
+        const { vehicleType, latitude, longitude } = data;
+
+        try {
+            const drivers = await findDriversInternal(vehicleType, latitude, longitude);
+
+            if (drivers.length > 0) {
+                socket.emit('driversFound', drivers);
+            } else {
+                socket.emit('noDriversFound', { message: 'No drivers available in your area' });
+            }
+        } catch (error) {
+            console.log(error);
+            socket.emit('error', { message: error.message });
+        }
+    });
+
+    // Handle other WebSocket events here
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`App running on port ${PORT}`);
 });
 
