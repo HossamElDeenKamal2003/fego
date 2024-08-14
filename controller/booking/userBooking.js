@@ -68,7 +68,7 @@ const io = require('socket.io');
 //         return res.status(500).json({ error: 'INTERNAL SERVER ERROR' });
 //     }
 // }
-const findDrivers = async (res, vehicleType, latitude, longitude) => {
+const findDrivers = async (vehicleType, latitude, longitude) => {
     // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
