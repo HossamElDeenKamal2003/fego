@@ -1,28 +1,24 @@
 const mongoose = require('mongoose');
 
 const pricesSchema = new mongoose.Schema({
-    // tripId:{
-    //     type:  mongoose.Schema.Types.ObjectId,
-    //     require: true
-    // },
-    country:{
+    country: {
         type: String,
-        require: true,
+        required: true,
         default: 'egypt'
     },
-    priceCar:{
+    priceCar: {
         type: Number,
-        require: true
+        required: true
     },
     motorocycle: {
         type: Number,
-        require: true
+        required: true
     },
     priceVan: {
         type: Number,
-        require: true
+        required: true
     }
-})
+});
 
-const prices = new mongoose.model('prices', pricesSchema);
-module.exports = prices
+const PricesModel = mongoose.model('Prices', pricesSchema);
+module.exports = PricesModel;

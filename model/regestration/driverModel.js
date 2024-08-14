@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // Use bcryptjs for consistency
 
 const driverSchema = new mongoose.Schema({
+    profile_image:{
+        type: String,
+        required: true
+    },
     username: {
         type: String,
         required: true,
