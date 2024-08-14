@@ -8,7 +8,8 @@ const {
     canceledTrip, // Correct function name
     endTrip,
     calculateCost,
-    cancelledTripbeforestart
+    cancelledTripbeforestart,
+    allTrips
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -28,4 +29,6 @@ router.patch('/end-trip', endTrip);
 router.patch('/cancelled-trip', canceledTrip); // Correct function name
 router.patch('/cancelled_before_start', cancelledTripbeforestart);
 router.put('/add-offer', addOffer);
+router.put('/get-offer', getOffer);
+router.get('/get-trips', allTrips);
 module.exports = router;

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bookModel = require('../../model/booking/userBooking');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
+const booking = require('../../model/booking/userBooking.js')
 const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
 
@@ -406,7 +407,14 @@ const cost = async (req, res) => {
 };
 
 const allTrips = async function(req, res){
-
+    try{
+        const trips = await bookModel.find();
+        res.status(200).json(trips);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: 'INTERNAL SERVER ERROR'});
+    }
 }
 
 module.exports = {
@@ -419,5 +427,6 @@ module.exports = {
     canceledTrip,
     endTrip,
     calculateCost,
-    cancelledTripbeforestart
+    cancelledTripbeforestart,
+    allTrips
 };

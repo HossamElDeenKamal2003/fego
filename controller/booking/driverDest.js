@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const DestDriver = require('../../model/booking/driversDestination');
-const io = require('../../server'); 
+const destDriver = require('../../model/booking/driversDestination');
+//const io = require('../../server'); 
 
 const updateLocation = async (req, res) => {
     const { driverId, longitude, latitude } = req.body;
@@ -14,7 +14,7 @@ const updateLocation = async (req, res) => {
     }
 
     try {
-        const result = await DestDriver.findOneAndUpdate(
+        const result = await destDriver.findOneAndUpdate(
             { _id: driverId },
             { location: { type: "Point", coordinates: [longitude, latitude] } },
             { new: true }
