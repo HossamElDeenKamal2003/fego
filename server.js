@@ -8,7 +8,7 @@ const multer = require('multer');
 const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
-const { findDriversInternal } = require('./controller/booking/userBooking');
+const { findDriversInternal, findDrivers } = require('./controller/booking/userBooking');
 // Load environment variables
 dotenv.config();
 
@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
         const { vehicleType, latitude, longitude } = data;
 
         try {
-            const drivers = await findDriversInternal(vehicleType, latitude, longitude);
+            const drivers = await findDrivers(vehicleType, latitude, longitude);
 
             if (drivers.length > 0) {
                 socket.emit('driversFound', drivers);
