@@ -9,7 +9,6 @@ const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
 const { findDriversInternal } = require('./controller/booking/userBooking');
-
 // Load environment variables
 dotenv.config();
 
@@ -109,6 +108,8 @@ io.on('connection', (socket) => {
         console.log('A user disconnected');
     });
 });
+global.io = io;
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;

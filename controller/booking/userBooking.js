@@ -6,12 +6,12 @@ const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
 
 // Find nearby drivers
-const findDrivers = async (data) => {
-    const { vehicleType, latitude, longitude } = data;
+const findDrivers = async (req, res) => {
+    const { vehicleType, latitude, longitude } = req.body;
 
     // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
-        return { error: 'Vehicle type, latitude, and longitude are required' };
+        return res.status(400).json({ error: 'Vehicle type, latitude, and longitude are required' });
     }
 
     try {
@@ -19,7 +19,7 @@ const findDrivers = async (data) => {
         const vehicles = await driverDestination.find({ vehicleType });
         
         if (vehicles.length === 0) {
-            return { error: 'No vehicles match your choice' };
+            return res.status(404).json({ error: 'No vehicles match your choice' });
         }
 
         // Now, find nearby drivers based on location and vehicle type
@@ -37,7 +37,7 @@ const findDrivers = async (data) => {
         });
 
         if (drivers.length === 0) {
-            return { error: 'No drivers available in your area' };
+            return res.status(404).json({ error: 'No drivers available in your area' });
         }
 
         // Find detailed information for each nearby driver
@@ -52,12 +52,11 @@ const findDrivers = async (data) => {
         );
 
         // Emit driver details to all connected clients via WebSocket
-        io.emit('driversFound', driverDetails);
-
-        return driverDetails;
+        global.io.emit('driversFound', driverDetails);
+        return res.status(200).json(driverDetails);
     } catch (error) {
         console.error('Error finding drivers:', error);
-        return { error: 'INTERNAL SERVER ERROR' };
+        return res.status(500).json({ error: 'INTERNAL SERVER ERROR' });
     }
 }
 
