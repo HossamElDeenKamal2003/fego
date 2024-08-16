@@ -24,7 +24,7 @@ const updateLocation = async (req, res) => {
             return res.status(404).json({ message: 'Driver not found' });
         }
 
-        // Emit event to notify all clients or specific clients about the location update
+        // Emit event to all connected clients about the location update
         io.emit('driverLocationUpdated', result);
 
         res.status(200).json(result);
@@ -33,6 +33,8 @@ const updateLocation = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+
 
 module.exports = {
     updateLocation,
