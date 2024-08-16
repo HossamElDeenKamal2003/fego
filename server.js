@@ -83,19 +83,18 @@ app.get('/', (req, res) => {
 // Handle WebSocket connections
 io.on('connection', (socket) => {
     console.log('A user connected');
-
+    const drivers = await findDrivers(vehicleType, latitude, longitude);
+    if (drivers.length > 0) {
+        socket.emit('driversFound', drivers);
+    } else {
+        socket.emit('noDriversFound', { message: 'No drivers available in your area' });
+    }
     // Handle 'findDrivers' event from the client
     socket.on('findDrivers', async (data) => {
         const { vehicleType, latitude, longitude } = data;
         console.log(vehicleType, latitude, longitude);
         try {
-            const drivers = await findDrivers(vehicleType, latitude, longitude);
-
-            if (drivers.length > 0) {
-                socket.emit('driversFound', drivers);
-            } else {
-                socket.emit('noDriversFound', { message: 'No drivers available in your area' });
-            }
+            console.log('ok');
         } catch (error) {
             console.log(error);
             socket.emit('error', { message: error.message });
