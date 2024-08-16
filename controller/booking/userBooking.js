@@ -69,12 +69,20 @@ const io = require('socket.io');
 //     }
 // }
 const findDrivers = async (vehicleType, latitude, longitude) => {
+    // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
     }
 
     try {
-        // Find drivers by vehicle type
+        // First, check for drivers with the matching vehicle type
+        const vehicles = await driverDestination.find({ vehicleType });
+        
+        if (vehicles.length === 0) {
+            throw new Error('No vehicles match your choice');
+        }
+
+        // Now, find nearby drivers based on location and vehicle type
         const drivers = await driverDestination.find({
             vehicleType,
             location: {
@@ -83,7 +91,7 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
                         type: "Point",
                         coordinates: [longitude, latitude]
                     },
-                    $maxDistance: 5000 // 5km radius
+                    $maxDistance: 5000 // Distance in meters, 5km = 5000m
                 }
             }
         });
@@ -92,23 +100,24 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
             throw new Error('No drivers available in your area');
         }
 
-        // Get detailed information for each driver
-        const driverDetails = await Promise.all(drivers.map(async (driver) => {
-            const detail = await detailTrip.findOne({ _id: driver.driverId });
-            return {
-                ...driver.toObject(),
-                ...detail?.toObject() // Merge driver info with detailTrip
-            };
-        }));
+        // Find detailed information for each nearby driver
+        const driverDetails = await Promise.all(
+            drivers.map(async (driver) => {
+                const detail = await detailTrip.findOne({ _id: driver.driverId });
+                return {
+                    ...driver.toObject(),
+                    ...detail?.toObject() // Use optional chaining to avoid errors if detail is not found
+                };
+            })
+        );
 
+        // Send the response directly from the findDrivers function
         return driverDetails;
     } catch (error) {
         console.error('Error finding drivers:', error);
         throw error;
     }
-};
-
-
+}
 // Book a trip
 const bookTrip = async (req, res) => {
     const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost } = req.body;

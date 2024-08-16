@@ -8,7 +8,7 @@ const multer = require('multer');
 const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
-
+const { findDriversInternal, findDrivers } = require('./controller/booking/userBooking');
 // Load environment variables
 dotenv.config();
 
@@ -20,21 +20,25 @@ const io = new Server(server);
 // Middleware setup
 app.use(cors());
 app.use(express.json());
-app.use(morgan('combined'));
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware for logging HTTP requests
+app.use(morgan('combined'));
+
 // Connect to MongoDB
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected'))
+    .then(() => {
+        console.log('MongoDB connected');
+    })
     .catch(err => {
         console.error('MongoDB connection error:', err);
-        process.exit(1);
+        process.exit(1); // Exit process with failure code
     });
 
-// Ensure upload directory exists
+// Ensure the directory exists before setting up multer storage
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -42,11 +46,15 @@ if (!fs.existsSync(uploadDir)) {
 
 // Configure Multer for local file storage
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, `${Date.now()}${path.extname(file.originalname)}`)
+    destination: function (req, file, cb) {
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, `${Date.now()}${path.extname(file.originalname)}`);
+    }
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
 // Import routes
 const user = require('./router/userRouter/userRouter');
@@ -61,22 +69,25 @@ app.use('/uploads', express.static(uploadDir));
 
 // Use routers
 app.use('/auth', user);
-app.use('/authdriver', driver);
+app.use('/authdriver', driver); // Ensure multer middleware is used correctly in the driverRouter
 app.use('/book', book);
 app.use('/user-profile', userProfile);
 app.use('/driverprofile', driverProfile);
 app.use('/prices', prices);
 
-// Root route
-app.get('/', (req, res) => res.send('Express'));
+// Define a root route to serve an EJS page (optional)
+app.get('/', (req, res) => {
+    res.send('Express');
+});
 
-// WebSocket connection
+// Handle WebSocket connections
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Listen for 'findDrivers' event
+    // Handle 'findDrivers' event from the client
     socket.on('findDrivers', async (data) => {
         const { vehicleType, latitude, longitude } = data;
+        console.log(vehicleType, latitude, longitude);
         try {
             const drivers = await findDrivers(vehicleType, latitude, longitude);
 
@@ -86,23 +97,27 @@ io.on('connection', (socket) => {
                 socket.emit('noDriversFound', { message: 'No drivers available in your area' });
             }
         } catch (error) {
-            console.error(error);
+            console.log(error);
             socket.emit('error', { message: error.message });
         }
     });
+
+    // Handle other WebSocket events here
 
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
 });
-
 global.io = io;
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`App running on port ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`App running on port ${PORT}`);
+});
 
-// Graceful shutdown
+// Handle graceful shutdown
 process.on('SIGTERM', () => {
     server.close(() => {
         console.log('Process terminated');

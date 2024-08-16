@@ -24,19 +24,15 @@ const updateLocation = async (req, res) => {
             return res.status(404).json({ message: 'Driver not found' });
         }
 
-        // Emit the updated location to all connected clients
+        // Emit event to notify all clients or specific clients about the location update
         io.emit('driverLocationUpdated', result);
 
-        // Respond to the API call
         res.status(200).json(result);
     } catch (error) {
         console.error('Error updating location:', error);
         res.status(500).json({ message: error.message });
     }
 };
-
-
-
 
 module.exports = {
     updateLocation,
