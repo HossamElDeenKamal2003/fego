@@ -157,35 +157,35 @@ io.on("connection", (socket) => {
     });
 });
 // Inside server.js, WebSocket connection handler
-io.on("connection", (socket) => {
-    console.log("A user connected");
+// io.on("connection", (socket) => {
+//     console.log("A user connected");
 
-    // Handle offer addition via WebSocket
-    socket.on('addOffer', async (data) => {
-        const { tripId, driverId, offer } = data;
+//     // Handle offer addition via WebSocket
+//     socket.on('addOffer', async (data) => {
+//         const { tripId, driverId, offer } = data;
 
-        if (!tripId || !driverId || !offer) {
-            socket.emit("error", { message: "tripId, driverId, and offer are required" });
-            return;
-        }
+//         if (!tripId || !driverId || !offer) {
+//             socket.emit("error", { message: "tripId, driverId, and offer are required" });
+//             return;
+//         }
 
-        try {
-            const newOffer = new offerModel({ tripId, driverId, offer });
-            await newOffer.save();
+//         try {
+//             const newOffer = new offerModel({ tripId, driverId, offer });
+//             await newOffer.save();
 
-            // Notify all clients about the new offer
-            io.emit('offerAdded', newOffer);
-        } catch (error) {
-            console.error('Error adding offer:', error);
-            socket.emit('error', { message: error.message });
-        }
-    });
+//             // Notify all clients about the new offer
+//             io.emit('offerAdded', newOffer);
+//         } catch (error) {
+//             console.error('Error adding offer:', error);
+//             socket.emit('error', { message: error.message });
+//         }
+//     });
 
-    // Handle disconnection
-    socket.on("disconnect", () => {
-        console.log("A user disconnected");
-    });
-});
+//     // Handle disconnection
+//     socket.on("disconnect", () => {
+//         console.log("A user disconnected");
+//     });
+// });
 
 offerController.setSocketInstance(io);
 
