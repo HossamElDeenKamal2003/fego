@@ -12,24 +12,25 @@ const addOffer = async function(req, res) {
         if (!tripId || !driverId) {
             return res.status(400).json({ message: 'tripId and driverId are required' });
         }
-        const newOffer = new offerModel({
-            tripId,
-            driverId,
-            offer
-        });
-        await newOffer.save();
+
+        // Use upsert to update or create offer
+        const upsertedOffer = await offerModel.findOneAndUpdate(
+            { tripId, driverId },
+            { offer },
+            { new: true, upsert: true } // Return the updated document and insert if it doesn't exist
+        );
 
         // Emit offerAdded event via WebSocket
         if (io) {
-            io.emit('offerAdded', newOffer);
+            io.emit('offerAdded', upsertedOffer);
         }
 
-        res.status(200).json({ message: 'Offer created successfully' });
+        res.status(200).json({ message: 'Offer upserted successfully' });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
-}
+};
 
 const getOffer = async function(req, res) {
     const { tripId } = req.body;
@@ -43,10 +44,10 @@ const getOffer = async function(req, res) {
         console.log(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 module.exports = {
     addOffer,
     getOffer,
     setSocketInstance
-}
+};

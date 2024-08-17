@@ -1,4 +1,4 @@
-const { addOffer } = require('./offers');
+const offerModel = require('../../model/booking/offers');
 
 const socketHandler = (io) => {
     io.on('connection', (socket) => {
@@ -13,11 +13,15 @@ const socketHandler = (io) => {
             }
 
             try {
-                const newOffer = new offerModel({ tripId, driverId, offer });
-                await newOffer.save();
+                // Upsert the offer
+                const upsertedOffer = await offerModel.findOneAndUpdate(
+                    { tripId, driverId },
+                    { offer },
+                    { new: true, upsert: true } // Return the updated document and insert if it doesn't exist
+                );
 
-                // Notify all clients about the new offer
-                io.emit('offerAdded', newOffer);
+                // Notify all clients about the offer
+                io.emit('offerAdded', upsertedOffer);
             } catch (error) {
                 console.error('Error adding offer:', error);
                 socket.emit('error', { message: error.message });
