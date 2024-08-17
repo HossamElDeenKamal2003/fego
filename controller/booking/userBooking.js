@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bookModel = require('../../model/booking/userBooking');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
+const pendingModel = require('../../model/booking/pendingTrips.js')
 const booking = require('../../model/booking/userBooking.js')
 const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
@@ -146,10 +147,26 @@ const bookTrip = async (req, res) => {
             cost: cost,
             status: 'pending' // Initial status
         });
-
-        // Save the new booking
         const savedBooking = await newBooking.save();
-
+        const pending = new pendingModel({
+            userId: id,
+            distance: distance,
+            pickupLocationName: pickupLocationName,
+            time: time,
+            username: username,
+            destination: destination,
+            pickupLocation: {
+                type: "Point",
+                coordinates: [longitude, latitude]
+            },
+            destinationLocation:{
+                type: "Point",
+                coordinates: [destlongtitude, destlatitude]
+            },
+            cost: cost,
+            status: 'pending' // Initial status
+        })
+        await pending.save();
         // Find available drivers
         const availableDrivers = await driverDestination.find({
             location: {
@@ -162,7 +179,7 @@ const bookTrip = async (req, res) => {
                 }
             }
         });
-
+        
         // Debugging: Log available drivers
         console.log('Available Drivers:', availableDrivers);
 
@@ -206,6 +223,7 @@ const calculateCost = async function(req, res) {
             { cost },
             { new: true } // Optionally, return the updated document
         );
+        
 
         return res.status(200).json({ message: 'Cost updated successfully', newCost });
     } catch (error) {
@@ -221,30 +239,40 @@ const acceptTrip = async (req, res) => {
     try {
         // Validate input
         if (!tripId || !driverId) {
-            console.log(tripId, driverId)
             return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
         }
 
-        // Fetch the booking by tripId and driverId
-        const driverBook = await detailTrip.findOne({_id: driverId})
-        const booking = await bookModel.findOne({ _id: tripId});
+        // Fetch the driver and booking by their IDs
+        const driverBook = await detailTrip.findOne({ _id: driverId });
+        const booking = await bookModel.findOne({ _id: tripId });
 
         if (!booking) {
-            return res.status(404).json({ message: 'trip not found' });
+            return res.status(404).json({ message: 'Trip not found' });
         }
-        if(!driverBook){
-            return res.status(404).json({ message: 'driver not found' });
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
         }
+
         // Update the status to 'accepted'
         booking.status = 'accepted';
+
+        // Find and delete the trip from pendingModel
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
+
+        // Save the updated booking
         const updatedBooking = await booking.save();
 
-        res.status(200).json({updatedBooking, driverBook});
+        res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 const cancelledTripbeforestart = async function(req,res){
     const {tripId} = req.body;
@@ -255,6 +283,12 @@ const cancelledTripbeforestart = async function(req,res){
         const booking = await bookModel.findOne({ _id: tripId});
         booking.status = 'cancelled';
         const updatedBooking = await booking.save();
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
+
         res.status(200).json({updatedBooking});
     }
     catch(error){
@@ -282,8 +316,15 @@ const startTrip = async (req, res) => {
         if(!driverBook){
             return res.status(404).json({ message: 'driver not found' });
         }
+
         // Update the status to 'accepted'
         booking.status = 'start';
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
+
         const updatedBooking = await booking.save();
 
         res.status(200).json({updatedBooking, driverBook});
@@ -314,6 +355,12 @@ const canceledTrip = async (req, res) => {
         }
         // Update the status to 'accepted'
         booking.status = 'cancelled';
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
+
         const updatedBooking = await booking.save();
 
         res.status(200).json({updatedBooking, driverBook});
@@ -345,6 +392,11 @@ const endTrip = async (req, res) => {
         // Update the status to 'accepted'
         booking.status = 'end';
         const updatedBooking = await booking.save();
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
 
         res.status(200).json({updatedBooking, driverBook});
     } catch (error) {

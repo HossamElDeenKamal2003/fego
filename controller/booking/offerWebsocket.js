@@ -1,4 +1,5 @@
 const offerModel = require('../../model/booking/offers');
+const Driver = require('../../model/regestration/driverModel.js');
 
 const socketHandler = (io) => {
     io.on('connection', (socket) => {
@@ -19,9 +20,16 @@ const socketHandler = (io) => {
                     { offer },
                     { new: true, upsert: true } // Return the updated document and insert if it doesn't exist
                 );
-
-                // Notify all clients about the offer
-                io.emit('offerAdded', upsertedOffer);
+                const driver = await Driver.findById(driverId);
+        
+                if (!driver) {
+                    return res.status(404).json({ message: 'Driver not found' });
+                }
+        
+                // Emit offerAdded event via WebSocket
+                if (io) {
+                    io.emit('offerAdded', { offer: upsertedOffer, driver });
+                }
             } catch (error) {
                 console.error('Error adding offer:', error);
                 socket.emit('error', { message: error.message });
