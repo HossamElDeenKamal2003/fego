@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const bookingSchema = new mongoose.Schema({
+const pending = new mongoose.Schema({
     userId:{
         type: mongoose.Schema.Types.ObjectId,
     },
@@ -67,13 +67,10 @@ const bookingSchema = new mongoose.Schema({
     cost:{
         type: Number,
     }
+})
+pending.index({ pickupLocation: '2dsphere' });
+pending.index({ destinationLocation: '2dsphere' });
 
-});
+const pendingModel = new mongoose.model('pendingTrips', pending);
 
-// Create a 2dsphere index on the pickupLocation field
-bookingSchema.index({ pickupLocation: '2dsphere' });
-bookingSchema.index({ destinationLocation: '2dsphere' });
-
-const bookModel = mongoose.model('Booking', bookingSchema);
-
-module.exports = bookModel;
+module.exports = pendingModel;
