@@ -120,7 +120,7 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
 }
 // Book a trip
 const bookTrip = async (req, res) => {
-    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost } = req.body;
+    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time } = req.body;
     try {
         // Validate input
         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined) {
@@ -131,6 +131,8 @@ const bookTrip = async (req, res) => {
         const newBooking = new bookModel({
             userId: id,
             distance: distance,
+            pickupLocationName: pickupLocationName,
+            time: time,
             username: username,
             destination: destination,
             pickupLocation: {

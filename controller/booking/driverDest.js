@@ -2,15 +2,13 @@ const mongoose = require('mongoose');
 const destDriver = require('../../model/booking/driversDestination');
 //const io = require('../../server'); 
 
-const updateLocation = async (req, res) => {
-    const { driverId, longitude, latitude } = req.body;
-
+const updateLocation = async (driverId, longitude, latitude) => {
     if (!driverId || longitude === undefined || latitude === undefined) {
-        return res.status(400).json({ message: 'Driver ID, longitude, and latitude are required' });
+        throw new Error('Driver ID, longitude, and latitude are required');
     }
 
     if (!mongoose.isValidObjectId(driverId)) {
-        return res.status(400).json({ message: 'Invalid Driver ID' });
+        throw new Error('Invalid Driver ID');
     }
 
     try {
@@ -21,19 +19,12 @@ const updateLocation = async (req, res) => {
         );
 
         if (!result) {
-            return res.status(404).json({ message: 'Driver not found' });
+            throw new Error('Driver not found');
         }
 
-        // Emit event to notify all clients or specific clients about the location update
-        io.emit('driverLocationUpdated', result);
-
-        res.status(200).json(result);
+        return result;
     } catch (error) {
-        console.error('Error updating location:', error);
-        res.status(500).json({ message: error.message });
+        throw error;
     }
 };
-
-module.exports = {
-    updateLocation,
-};
+module.exports = { updateLocation };
