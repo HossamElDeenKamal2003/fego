@@ -9,7 +9,7 @@ const tripSocketHandler = (socketIoInstance) => {
         console.log('A user connected for trips');
 
         // Emit all trips when a user connects
-        socket.emit('getAllTrips', async () => {
+        socket.on('getAllTrips', async () => {
             try {
                 const trips = await bookModel.find(); // Fetch all trips from DB
                 socket.emit('tripsUpdate', trips); // Emit trips to the connected user
