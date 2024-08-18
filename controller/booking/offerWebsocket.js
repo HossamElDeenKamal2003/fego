@@ -20,16 +20,45 @@ const socketHandler = (io) => {
                     { offer },
                     { new: true, upsert: true } // Return the updated document and insert if it doesn't exist
                 );
+
                 const driver = await Driver.findById(driverId);
-        
                 if (!driver) {
-                    return res.status(404).json({ message: 'Driver not found' });
+                    socket.emit('error', { message: 'Driver not found' });
+                    return;
                 }
-        
+
+                // Convert timestamps to Egypt time zone
+                const options = { 
+                    timeZone: 'Africa/Cairo', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: 'numeric', 
+                    second: 'numeric' 
+                };
+
+                const formattedOffer = {
+                    ...upsertedOffer.toObject(),
+                    createdAt: new Date(upsertedOffer.createdAt).toLocaleString('en-US', options),
+                    updatedAt: new Date(upsertedOffer.updatedAt).toLocaleString('en-US', options)
+                };
+
                 // Emit offerAdded event via WebSocket
                 if (io) {
-                    io.emit('offerAdded', { offer: upsertedOffer, driver });
+                    io.emit('offerAdded', { offer: formattedOffer, driver });
                 }
+
+                // Schedule the offer to be deleted after 30 seconds
+                setTimeout(async () => {
+                    try {
+                        await offerModel.findByIdAndDelete(upsertedOffer._id);
+                        io.emit('offerDeleted', { offerId: upsertedOffer._id });
+                    } catch (error) {
+                        console.error('Error deleting offer:', error);
+                    }
+                }, 30000); // 30000 milliseconds = 30 seconds
+
             } catch (error) {
                 console.error('Error adding offer:', error);
                 socket.emit('error', { message: error.message });
