@@ -7,13 +7,16 @@ const offersSchema = new mongoose.Schema({
     },
     driverId: {
         type: String,
-        required: true
+        required: true,
     },
-    offer:{
+    offer: {
         type: Number,
-        required: true
+        required: true,
     }
-})
+    }, 
+{
+    timestamps: true  // Automatically adds createdAt and updatedAt fields
+});
 
-const offerModel = new mongoose.model('offer', offersSchema);
+const offerModel = mongoose.model('offer', offersSchema);
 module.exports = offerModel;
