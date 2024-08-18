@@ -6,7 +6,7 @@ const bookingSchema = new mongoose.Schema({
     },
     distance:{
         type: String,
-        required: true
+        //required: true
     },
     username: {
         type: String,

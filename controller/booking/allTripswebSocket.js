@@ -19,12 +19,16 @@ const tripSocketHandler = (socketIoInstance) => {
             }
         };
 
-        emitTrips(); // Initial emit
+        // Emit all trips initially when a user connects
+        emitTrips();
 
         // Set up change stream to watch for changes in the collection
         const changeStream = bookModel.watch();
+
         changeStream.on('change', (change) => {
-            emitTrips(); // Emit trips data on change
+            console.log('Change detected:', change);
+            // Emit updated trips data on change
+            emitTrips();
         });
 
         // Handle disconnection
