@@ -462,30 +462,27 @@ const cost = async (req, res) => {
 };
 
 
-
-const setTripsSocketInstance = (socketIoInstance) => {
-    io = socketIoInstance; // Set WebSocket instance
+const getTripsSocket = (socketIoInstance) => {
+    io = getTripsSocket; // Set WebSocket instance
 };
 
-const allTrips = async (req, res) => {
-    try {
+const allTrips = async function(req, res){
+    try{
         // Fetch all trips
         const trips = await bookModel.find();
-
+        
         // Emit trips to all WebSocket clients
-        if (io) {
+        if(io) {
             io.emit('tripsUpdate', trips); // Notify all connected clients with the updated trips
         }
 
         // Send response with trips to the client who made the HTTP request
         res.status(200).json(trips);
-    } catch (error) {
+    } catch(error) {
         console.log(error);
-        res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
+        res.status(500).json({message: 'INTERNAL SERVER ERROR'});
     }
 };
-
-
 
 module.exports = {
     findDrivers,
@@ -499,5 +496,5 @@ module.exports = {
     calculateCost,
     cancelledTripbeforestart,
     allTrips,
-    //getTripsSocket
+    getTripsSocket
 };

@@ -27,7 +27,7 @@ app.use(cors());
 app.use(express.json());
 
 // Set EJS as the view engine
-app.set("view engine", "ejs");
+app.set("view engine", "ejs");// index.html
 app.set("views", path.join(__dirname, "views"));
 
 // Middleware for logging HTTP requests
@@ -191,15 +191,14 @@ const userSearches = new Map(); // Map<socketId, searchCriteria>
 //     });
 // });
 
-//offerController.setSocketInstance(io);
+offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
 // socketHandler(io);
 socketHandler(io);
-tripSocketHandler(io); // Correctly pass the io instance to the trip handler
+tripSocketHandler(io);
 
 driverSocketHandler(io); // Driver-specific WebSocket handler
-offerController.setSocketInstance(io);// Driver-specific WebSocket handler
 global.io = io;
 
 // Start the server
