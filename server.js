@@ -10,9 +10,13 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { findDrivers, findDriversInternal } = require("./controller/booking/userBooking");
 const { updateLocation } = require("./controller/booking/driverDest");
-const offerController = require('./controller/booking/offers');
 const socketHandler = require('./controller/booking/offerWebsocket');
+const offerController = require('./controller/booking/offers')
+const driverSocketHandler = require('./controller/booking/driverWebsocket');
+const tripSocketHandler = require('./controller/booking/allTripswebSocket');
+
 dotenv.config();
+console.log(process.env.NODE_ENV);
 
 const app = express();
 const server = http.createServer(app);
@@ -89,73 +93,73 @@ app.get("/", (req, res) => {
 const userSearches = new Map(); // Map<socketId, searchCriteria>
 
 // WebSocket logic
-io.on("connection", (socket) => {
-    console.log("A user connected");
+// io.on("connection", (socket) => {
+//     console.log("A user connected");
 
-    // Handle driver location update event
-    socket.on("updateLocation", async (data) => {
-        const { driverId, longitude, latitude } = data;
+//     // Handle driver location update event
+//     socket.on("updateLocation", async (data) => {
+//         const { driverId, longitude, latitude } = data;
 
-        if (!driverId || longitude === undefined || latitude === undefined) {
-            socket.emit("error", { message: "Driver ID, longitude, and latitude are required" });
-            return;
-        }
+//         if (!driverId || longitude === undefined || latitude === undefined) {
+//             socket.emit("error", { message: "Driver ID, longitude, and latitude are required" });
+//             return;
+//         }
 
-        try {
-            // Call the updateLocation function with the received data
-            const updatedDriver = await updateLocation(driverId, longitude, latitude);
+//         try {
+//             // Call the updateLocation function with the received data
+//             const updatedDriver = await updateLocation(driverId, longitude, latitude);
 
-            // Notify clients about the location update
-            socket.emit("driverLocationUpdated", updatedDriver);
+//             // Notify clients about the location update
+//             socket.emit("driverLocationUpdated", updatedDriver);
 
-            // Check if the updated location matches any user's search criteria
-            for (const [socketId, searchCriteria] of userSearches.entries()) {
-                const { vehicleType, latitude: searchLat, longitude: searchLng } = searchCriteria;
+//             // Check if the updated location matches any user's search criteria
+//             for (const [socketId, searchCriteria] of userSearches.entries()) {
+//                 const { vehicleType, latitude: searchLat, longitude: searchLng } = searchCriteria;
 
-                if (vehicleType === updatedDriver.vehicleType) {
-                    const distance = calculateDistance(searchLat, searchLng, latitude, longitude);
+//                 if (vehicleType === updatedDriver.vehicleType) {
+//                     const distance = calculateDistance(searchLat, searchLng, latitude, longitude);
 
-                    if (distance <= 5000) { // Within 5km
-                        io.to(socketId).emit("matchingDriverFound", updatedDriver);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error updating location:", error);
-            socket.emit("error", { message: error.message });
-        }
-    });
+//                     if (distance <= 5000) { // Within 5km
+//                         io.to(socketId).emit("matchingDriverFound", updatedDriver);
+//                     }
+//                 }
+//             }
+//         } catch (error) {
+//             console.error("Error updating location:", error);
+//             socket.emit("error", { message: error.message });
+//         }
+//     });
 
-    // Handle 'findDrivers' event from the client
-    socket.on("findDrivers", async (data) => {
-        const { vehicleType, latitude, longitude } = data;
-        console.log(vehicleType, latitude, longitude);
+//     // Handle 'findDrivers' event from the client
+//     socket.on("findDrivers", async (data) => {
+//         const { vehicleType, latitude, longitude } = data;
+//         console.log(vehicleType, latitude, longitude);
 
-        // Track user search
-        userSearches.set(socket.id, { vehicleType, latitude, longitude });
+//         // Track user search
+//         userSearches.set(socket.id, { vehicleType, latitude, longitude });
 
-        try {
-            const drivers = await findDrivers(vehicleType, latitude, longitude);
+//         try {
+//             const drivers = await findDrivers(vehicleType, latitude, longitude);
 
-            if (drivers.length > 0) {
-                socket.emit("driversFound", drivers);
-            } else {
-                socket.emit("noDriversFound", {
-                    message: "No drivers available in your area",
-                });
-            }
-        } catch (error) {
-            console.log(error);
-            socket.emit("error", { message: error.message });
-        }
-    });
+//             if (drivers.length > 0) {
+//                 socket.emit("driversFound", drivers);
+//             } else {
+//                 socket.emit("noDriversFound", {
+//                     message: "No drivers available in your area",
+//                 });
+//             }
+//         } catch (error) {
+//             console.log(error);
+//             socket.emit("error", { message: error.message });
+//         }
+//     });
 
-    // Handle disconnection
-    socket.on("disconnect", () => {
-        console.log("A user disconnected");
-        userSearches.delete(socket.id); // Clean up user search data
-    });
-});
+//     // Handle disconnection
+//     socket.on("disconnect", () => {
+//         console.log("A user disconnected");
+//         userSearches.delete(socket.id); // Clean up user search data
+//     });
+// });
 // Inside server.js, WebSocket connection handler
 // io.on("connection", (socket) => {
 //     console.log("A user connected");
@@ -187,10 +191,15 @@ io.on("connection", (socket) => {
 //     });
 // });
 
-offerController.setSocketInstance(io);
+//offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
+// socketHandler(io);
 socketHandler(io);
+tripSocketHandler(io); // Correctly pass the io instance to the trip handler
+
+driverSocketHandler(io); // Driver-specific WebSocket handler
+offerController.setSocketInstance(io);// Driver-specific WebSocket handler
 global.io = io;
 
 // Start the server
