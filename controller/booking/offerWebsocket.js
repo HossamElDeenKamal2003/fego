@@ -49,21 +49,6 @@ const socketHandler = (io) => {
                     io.emit('offerAdded', { offer: formattedOffer, driver });
                 }
 
-                // Schedule the offer to be deleted after 30 seconds
-                setTimeout(async () => {
-                    try {
-                        await offerModel.findByIdAndDelete(upsertedOffer._id);
-                        const formattedOffer = {
-                            ...upsertedOffer.toObject(),
-                            createdAt: new Date(upsertedOffer.createdAt).toLocaleString('en-US', options),
-                            updatedAt: new Date(upsertedOffer.updatedAt).toLocaleString('en-US', options)
-                        };
-                        io.emit('offerDeleted', { offerId: upsertedOffer._id, formattedOffer });
-                    } catch (error) {
-                        console.error('Error deleting offer:', error);
-                    }
-                }, 30000); // 30000 milliseconds = 30 seconds, each second is 1000 millsecond
-
             } catch (error) {
                 console.error('Error adding offer:', error);
                 socket.emit('error', { message: error.message });
