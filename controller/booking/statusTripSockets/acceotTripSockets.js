@@ -10,6 +10,7 @@ const tripStatusHandler = (io) => {
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
             try {
+                console.log('Data received:', data);
                 const { tripId, driverId } = data;
 
                 // Validate input
