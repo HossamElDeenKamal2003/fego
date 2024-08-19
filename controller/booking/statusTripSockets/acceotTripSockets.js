@@ -9,7 +9,7 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
-            const tripId = data.tripId;
+            const {tripId} = data;
             //const driverId = data.driverId;
 
             //console.log('Received data:', { tripId, driverId });
