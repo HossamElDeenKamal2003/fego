@@ -9,16 +9,16 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
+            const { tripId, driverId } = data;
+            //Validate input
+                if (!tripId || !driverId) {
+                    socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
+                    return;
+                }
+
             try {
                 console.log('Data received:', data);
-                const { tripId, driverId } = data;
-
-                // Validate input
-                // if (!tripId || !driverId) {
-                //     socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
-                //     return;
-                // }
-
+                
                 // Fetch the driver and booking by their IDs
                 const driver = await detailTrip.findOne({ _id: driverId });
                 const tripBooking = await bookModel.findOne({ _id: tripId });
