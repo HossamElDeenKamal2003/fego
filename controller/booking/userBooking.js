@@ -267,12 +267,18 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
+        // Emit an event to notify clients
+        if (global.io) {
+            global.io.emit('tripUpdated', { updatedBooking, driverBook, driverLocation });
+        }
+
         res.status(200).json({ updatedBooking, driverBook, driverLocation });
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 const cancelledTripbeforestart = async function(req,res){
