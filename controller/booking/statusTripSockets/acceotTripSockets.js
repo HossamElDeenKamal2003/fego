@@ -27,7 +27,7 @@ const tripStatusHandler = (io) => {
                 // Fetch the driver and booking by their IDs
                 //const driver = await detailTrip.findOne({ id: driverId });
                 const tripBooking = await bookModel.findById(tripId);
-                const driverLocation = await driverDestination.findOne({ driverId });
+                //const driverLocation = await driverDestination.findOne({ driverId });
 
                 if (!tripBooking) {
                     socket.emit('acceptTripResponse', { error: 'Trip not found' });
