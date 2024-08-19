@@ -51,10 +51,10 @@ const tripStatusHandler = (io) => {
                 const updatedBooking = await tripBooking.save();
 
                 // Notify the client who made the request
-                socket.emit('acceptTripResponse', { updatedBooking, driverLocation });
+                socket.emit('acceptTripResponse', { updatedBooking });
 
                 // Notify all clients about the trip update
-                io.emit('tripUpdated', { updatedBooking, driverLocation });
+                io.emit('tripUpdated', { updatedBooking });
 
             } catch (error) {
                 console.error('Error in acceptTrip handler:', error.message);
