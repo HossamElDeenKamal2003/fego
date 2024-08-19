@@ -494,7 +494,7 @@ const allTrips = async function(req, res){
 module.exports = {
     findDrivers,
     bookTrip,
-    acceptTrip,
+    //acceptTrip,
     updateStatus,
     cost,
     startTrip,
