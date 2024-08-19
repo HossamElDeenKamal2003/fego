@@ -10,9 +10,9 @@ const tripStatusHandler = (io) => {
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
             const tripId = data.tripId;
-            const driverId = data.driverId;
+            //const driverId = data.driverId;
 
-            console.log('Received data:', { tripId, driverId });
+            //console.log('Received data:', { tripId, driverId });
 
             // Validate input
             // if (!tripId || !driverId) {
@@ -22,10 +22,10 @@ const tripStatusHandler = (io) => {
             // }
 
             try {
-                console.log('Data for database lookup:', { tripId, driverId });
+                //console.log('Data for database lookup:', { tripId, driverId });
 
                 // Fetch the driver and booking by their IDs
-                const driver = await detailTrip.findOne({ id: driverId });
+                //const driver = await detailTrip.findOne({ id: driverId });
                 const tripBooking = await bookModel.findById(tripId);
                 const driverLocation = await driverDestination.findOne({ driverId });
 
@@ -33,10 +33,10 @@ const tripStatusHandler = (io) => {
                     socket.emit('acceptTripResponse', { error: 'Trip not found' });
                     return;
                 }
-                if (!driver) {
-                    socket.emit('acceptTripResponse', { error: 'Driver not found' });
-                    return;
-                }
+                // if (!driver) {
+                //     socket.emit('acceptTripResponse', { error: 'Driver not found' });
+                //     return;
+                // }
 
                 // Update the status to 'accepted'
                 tripBooking.status = 'accepted';
@@ -51,10 +51,10 @@ const tripStatusHandler = (io) => {
                 const updatedBooking = await tripBooking.save();
 
                 // Notify the client who made the request
-                socket.emit('acceptTripResponse', { updatedBooking, driver, driverLocation });
+                socket.emit('acceptTripResponse', { updatedBooking, driverLocation });
 
                 // Notify all clients about the trip update
-                io.emit('tripUpdated', { updatedBooking, driver, driverLocation });
+                io.emit('tripUpdated', { updatedBooking, driverLocation });
 
             } catch (error) {
                 console.error('Error in acceptTrip handler:', error.message);
