@@ -3,7 +3,8 @@ const bookModel = require('../../model/booking/userBooking');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
 const pendingModel = require('../../model/booking/pendingTrips.js')
-const booking = require('../../model/booking/userBooking.js')
+const booking = require('../../model/booking/userBooking.js');
+const DestDriver = require('../../model/booking/driversDestination.js');
 const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
 
@@ -245,6 +246,7 @@ const acceptTrip = async (req, res) => {
         // Fetch the driver and booking by their IDs
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const booking = await bookModel.findOne({ _id: tripId });
+        const driverLocation = await driverDestination.findOne({ driverId: driverId });
 
         if (!booking) {
             return res.status(404).json({ message: 'Trip not found' });
@@ -258,7 +260,6 @@ const acceptTrip = async (req, res) => {
 
         // Find and delete the trip from pendingModel
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }
@@ -266,7 +267,7 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
-        res.status(200).json({ updatedBooking, driverBook });
+        res.status(200).json({ updatedBooking, driverBook, driverLocation });
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ message: error.message });
