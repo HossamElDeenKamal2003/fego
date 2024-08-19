@@ -5,24 +5,25 @@ const pendingModel = require('../../../model/booking/pendingTrips');
 
 const tripStatusHandler = (io) => {
     io.on('connection', (socket) => {
-        console.log('A user connected Accepted Trip');
+        console.log('A user connected for trip status updates');
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
             const { tripId, driverId } = data;
-            //Validate input
-                if (!tripId || !driverId) {
-                    socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
-                    return;
-                }
+
+            // Validate input
+            if (!tripId || !driverId) {
+                socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
+                return;
+            }
 
             try {
                 console.log('Data received:', data);
-                
+
                 // Fetch the driver and booking by their IDs
-                const driver = await detailTrip.findOne({ _id: driverId });
-                const tripBooking = await bookModel.findOne({ _id: tripId });
-                const driverLocation = await driverDestination.findOne({ driverId: driverId });
+                const driver = await detailTrip.findById(driverId);
+                const tripBooking = await bookModel.findById(tripId);
+                const driverLocation = await driverDestination.findOne({ driverId });
 
                 if (!tripBooking) {
                     socket.emit('acceptTripResponse', { error: 'Trip not found' });
@@ -37,7 +38,7 @@ const tripStatusHandler = (io) => {
                 tripBooking.status = 'accepted';
 
                 // Find and delete the trip from pendingModel
-                const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+                const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
                 if (!deletedPendingTrip) {
                     console.warn(`Trip ${tripId} not found in pendingModel`);
                 }
@@ -45,15 +46,15 @@ const tripStatusHandler = (io) => {
                 // Save the updated booking
                 const updatedBooking = await tripBooking.save();
 
-                // Notify the client
+                // Notify the client who made the request
                 socket.emit('acceptTripResponse', { updatedBooking, driver, driverLocation });
 
                 // Notify all clients about the trip update
                 io.emit('tripUpdated', { updatedBooking, driver, driverLocation });
 
             } catch (error) {
-                console.error(error.message);
-                socket.emit('acceptTripResponse', { error: error.message });
+                console.error('Error in acceptTrip handler:', error.message);
+                socket.emit('acceptTripResponse', { error: 'An error occurred while processing the trip' });
             }
         });
 
