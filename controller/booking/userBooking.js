@@ -240,7 +240,7 @@ const acceptTrip = async (req, res) => {
     try {
         // Validate input
         if (!tripId || !driverId) {
-            return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
+            return res.status(400).json({ message: 'data require' });
         }
 
         // Fetch the driver and booking by their IDs
