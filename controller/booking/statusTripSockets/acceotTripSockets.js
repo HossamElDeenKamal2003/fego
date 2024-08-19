@@ -42,10 +42,10 @@ const tripStatusHandler = (io) => {
                 tripBooking.status = 'accepted';
 
                 // Find and delete the trip from pendingModel
-                const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
-                if (!deletedPendingTrip) {
-                    console.warn(`Trip ${tripId} not found in pendingModel`);
-                }
+                //const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
+                //if (!deletedPendingTrip) {
+                    //console.warn(`Trip ${tripId} not found in pendingModel`);
+               // }
 
                 // Save the updated booking
                 const updatedBooking = await tripBooking.save();
