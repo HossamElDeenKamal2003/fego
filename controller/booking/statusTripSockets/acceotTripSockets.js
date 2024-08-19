@@ -9,9 +9,11 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
-            console.log('Received data:', data);
+            // Trim any extra spaces from the keys
+            const tripId = data.tripId?.trim();
+            const driverId = data['driverId']?.trim();
 
-            const { tripId, driverId } = data;
+            console.log('Received data:', { tripId, driverId });
 
             // Validate input
             if (!tripId || !driverId) {
