@@ -9,16 +9,19 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
+            console.log('Received data:', data);
+
             const { tripId, driverId } = data;
 
             // Validate input
             if (!tripId || !driverId) {
+                console.log(`Validation failed: tripId=${tripId}, driverId=${driverId}`);
                 socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
                 return;
             }
 
             try {
-                console.log('Data received:', data);
+                console.log('Data for database lookup:', { tripId, driverId });
 
                 // Fetch the driver and booking by their IDs
                 const driver = await detailTrip.findById(driverId);
