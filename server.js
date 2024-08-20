@@ -10,6 +10,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { findDrivers, findDriversInternal } = require("./controller/booking/userBooking");
 const { updateLocation } = require("./controller/booking/driverDest");
+
 const socketHandler = require('./controller/booking/offerWebsocket');
 const offerController = require('./controller/booking/offers')
 const driverSocketHandler = require('./controller/booking/driverWebsocket');
@@ -74,7 +75,7 @@ const book = require("./router/bookTrip/bookingRouting");
 const userProfile = require("./router/userProfile/patchUser");
 const driverProfile = require("./router/userProfile/patchDriver");
 const prices = require("./router/bookTrip/priceRouter");
-
+const createChat = require("./router/chatingRouter/createChat")
 // Middleware for static files
 app.use("/uploads", express.static(uploadDir));
 
@@ -85,7 +86,7 @@ app.use("/book", book);
 app.use("/user-profile", userProfile);
 app.use("/driverprofile", driverProfile);
 app.use("/prices", prices);
-
+app.use("/create", createChat);
 // Define a root route to serve an EJS page (optional)
 app.get("/", (req, res) => {
     res.send("Express");
