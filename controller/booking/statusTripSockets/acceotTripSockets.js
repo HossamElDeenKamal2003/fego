@@ -54,7 +54,7 @@ const driverDataHandler = (io) => {
         console.log('Connection to get driver data');
         
         socket.on('getDriverData', async (data) => {
-            const driverId = data;
+            const driverId = data;  // `data` should be the driver's ID string
 
             if (!driverId) {
                 socket.emit('driverDataResponse', { error: 'Driver ID is required' });
@@ -62,8 +62,9 @@ const driverDataHandler = (io) => {
             }
 
             try {
+                // Fetch the driver and driver location by their ID
                 const findDriver = await detailTrip.findOne({ _id: driverId });
-                const driverLocation = await driverDestination.findOne({ driverId: driverId });
+                const driverLocation = await driverDestination.findOne({ driverId: driverId }); // Assuming driverLocation uses `driverId`
 
                 if (!findDriver) {
                     socket.emit('driverDataResponse', { error: 'Driver not found' });
@@ -85,6 +86,7 @@ const driverDataHandler = (io) => {
         });
     });
 };
+
 
 module.exports = {
     tripStatusHandler,
