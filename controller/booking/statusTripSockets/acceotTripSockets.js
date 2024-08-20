@@ -57,7 +57,7 @@ const driverDataHandler = (io) => {
         
         socket.on('getDriverData', async (data) => {
             // Extract and convert driverId to ObjectId
-            const driverId = data.driverId ? mongoose.Types.ObjectId(data.driverId) : null;
+            const driverId = data.driverId ? new mongoose.Types.ObjectId(data.driverId) : null;
 
             if (!driverId) {
                 socket.emit('driverDataResponse', { error: 'Valid Driver ID is required' });
