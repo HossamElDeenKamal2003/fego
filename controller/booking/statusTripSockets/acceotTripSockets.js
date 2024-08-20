@@ -9,43 +9,24 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event
         socket.on('acceptTrip', async (data) => {
-            const {tripId} = data;
-            //const driverId = data.driverId;
-
-            //console.log('Received data:', { tripId, driverId });
-
-            // Validate input
-            // if (!tripId || !driverId) {
-            //     console.log(`Validation failed: tripId=${tripId}, driverId=${driverId}`);
-            //     socket.emit('acceptTripResponse', { error: 'Trip ID and Driver ID are required' });
-            //     return;
-            // }
+            const tripId = data.tripId;
 
             try {
-                //console.log('Data for database lookup:', { tripId, driverId });
-
-                // Fetch the driver and booking by their IDs
-                //const driver = await detailTrip.findOne({ id: driverId });
                 const tripBooking = await bookModel.findById(tripId);
-                //const driverLocation = await driverDestination.findOne({ driverId });
 
                 if (!tripBooking) {
                     socket.emit('acceptTripResponse', { error: 'Trip not found' });
                     return;
                 }
-                // if (!driver) {
-                //     socket.emit('acceptTripResponse', { error: 'Driver not found' });
-                //     return;
-                // }
 
                 // Update the status to 'accepted'
                 tripBooking.status = 'accepted';
 
                 // Find and delete the trip from pendingModel
-                //const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
-                //if (!deletedPendingTrip) {
-                    //console.warn(`Trip ${tripId} not found in pendingModel`);
-               // }
+                const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
+                if (!deletedPendingTrip) {
+                    console.warn(`Trip ${tripId} not found in pendingModel`);
+                }
 
                 // Save the updated booking
                 const updatedBooking = await tripBooking.save();
@@ -68,4 +49,44 @@ const tripStatusHandler = (io) => {
     });
 };
 
-module.exports = tripStatusHandler;
+const driverDataHandler = (io) => {
+    io.on('connection', (socket) => {
+        console.log('Connection to get driver data');
+        
+        socket.on('getDriverData', async (data) => {
+            const driverId = data;
+
+            if (!driverId) {
+                socket.emit('driverDataResponse', { error: 'Driver ID is required' });
+                return;
+            }
+
+            try {
+                const findDriver = await detailTrip.findById(driverId);
+                const driverLocation = await driverDestination.findOne({ driverId: driverId });
+
+                if (!findDriver) {
+                    socket.emit('driverDataResponse', { error: 'Driver not found' });
+                    return;
+                }
+                
+                if (!driverLocation) {
+                    socket.emit('driverDataResponse', { error: 'Driver location not found' });
+                    return;
+                }
+
+                // Send the driver data back to the client
+                socket.emit('driverDataResponse', { findDriver, driverLocation });
+
+            } catch (error) {
+                console.error('Error in getDriverData handler:', error.message); 
+                socket.emit('driverDataResponse', { error: 'An error occurred while fetching the driver data' });
+            }
+        });
+    });
+};
+
+module.exports = {
+    tripStatusHandler,
+    driverDataHandler
+};
