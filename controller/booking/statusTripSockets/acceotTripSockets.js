@@ -62,7 +62,7 @@ const driverDataHandler = (io) => {
             }
 
             try {
-                const findDriver = await detailTrip.findById(driverId);
+                const findDriver = await detailTrip.findOne({ _id: driverId });
                 const driverLocation = await driverDestination.findOne({ driverId: driverId });
 
                 if (!findDriver) {
