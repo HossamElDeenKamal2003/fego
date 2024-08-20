@@ -49,22 +49,25 @@ const tripStatusHandler = (io) => {
     });
 };
 
+const mongoose = require('mongoose');  // Ensure mongoose is imported
+
 const driverDataHandler = (io) => {
     io.on('connection', (socket) => {
         console.log('Connection to get driver data');
         
         socket.on('getDriverData', async (data) => {
-            const driverId = data;  // `data` should be the driver's ID string
+            // Extract and convert driverId to ObjectId
+            const driverId = data.driverId ? mongoose.Types.ObjectId(data.driverId) : null;
 
             if (!driverId) {
-                socket.emit('driverDataResponse', { error: 'Driver ID is required' });
+                socket.emit('driverDataResponse', { error: 'Valid Driver ID is required' });
                 return;
             }
 
             try {
-                // Fetch the driver and driver location by their ID
+                // Fetch the driver and driver location by their ObjectId
                 const findDriver = await detailTrip.findOne({ _id: driverId });
-                const driverLocation = await driverDestination.findOne({ driverId: driverId }); // Assuming driverLocation uses `driverId`
+                const driverLocation = await driverDestination.findOne({ driverId: driverId });
 
                 if (!findDriver) {
                     socket.emit('driverDataResponse', { error: 'Driver not found' });
