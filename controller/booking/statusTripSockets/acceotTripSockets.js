@@ -4,60 +4,60 @@ const detailTrip = require('../../../model/regestration/driverModel');
 const pendingModel = require('../../../model/booking/pendingTrips');
 const mongoose = require('mongoose');  // Ensure mongoose is imported
 
-const tripStatusHandler = (io) => {
-    io.on('connection', (socket) => {
-        console.log('A user connected for trip status updates');
+// const tripStatusHandler = (io) => {
+//     io.on('connection', (socket) => {
+//         console.log('A user connected for trip status updates');
 
-        // Handle acceptTrip event  
-        socket.on('acceptTrip', async (data) => {
-            const tripId = data.tripId ? new mongoose.Types.ObjectId(data.tripId) : null;
-            const driverId = data.driverId ? new mongoose.Types.ObjectId(data.driverId) : null;
+//         // Handle acceptTrip event  
+//         socket.on('acceptTrip', async (data) => {
+//             const tripId = data.tripId ? new mongoose.Types.ObjectId(data.tripId) : null;
+//             const driverId = data.driverId ? new mongoose.Types.ObjectId(data.driverId) : null;
 
-            try {
-                const tripBooking = await bookModel.findById(tripId);
+//             try {
+//                 const tripBooking = await bookModel.findById(tripId);
 
-                if (!tripBooking) {
-                    socket.emit('acceptTripResponse', { error: 'Trip not found' });
-                    return;
-                }
+//                 if (!tripBooking) {
+//                     socket.emit('acceptTripResponse', { error: 'Trip not found' });
+//                     return;
+//                 }
 
-                // Update the status to 'accepted'
-                tripBooking.status = 'accepted';
+//                 // Update the status to 'accepted'
+//                 tripBooking.status = 'accepted';
 
-                // Delete the trip from pending model using _id
-                const deletingPendingTrip = await pendingModel.findByIdAndDelete(tripId); 
-                if (!deletingPendingTrip) {
-                    console.warn(`Pending trip with _id ${tripId} not found in pendingModel`);
-                }
+//                 // Delete the trip from pending model using _id
+//                 const deletingPendingTrip = await pendingModel.findByIdAndDelete(tripId); 
+//                 if (!deletingPendingTrip) {
+//                     console.warn(`Pending trip with _id ${tripId} not found in pendingModel`);
+//                 }
 
-                const findDriver = await detailTrip.findOne({ _id: driverId });
-                const driverLocation = await driverDestination.findOne({ driverId });
+//                 const findDriver = await detailTrip.findOne({ _id: driverId });
+//                 const driverLocation = await driverDestination.findOne({ driverId });
 
-                if (!findDriver || !driverLocation) {
-                    socket.emit('acceptTripResponse', { error: 'Driver or Driver location not found' });
-                    return;
-                }
+//                 if (!findDriver || !driverLocation) {
+//                     socket.emit('acceptTripResponse', { error: 'Driver or Driver location not found' });
+//                     return;
+//                 }
 
-                // Save the updated booking
-                const updatedBooking = await tripBooking.save();
+//                 // Save the updated booking
+//                 const updatedBooking = await tripBooking.save();
 
-                // Notify the client who made the request
-                socket.emit('acceptTripResponse', { updatedBooking, findDriver, driverLocation });
+//                 // Notify the client who made the request
+//                 socket.emit('acceptTripResponse', { updatedBooking, findDriver, driverLocation });
 
-                // Notify all clients about the trip update
-                io.emit('tripUpdated', { updatedBooking, findDriver, driverLocation });
+//                 // Notify all clients about the trip update
+//                 io.emit('tripUpdated', { updatedBooking, findDriver, driverLocation });
 
-            } catch (error) {
-                console.error('Error in acceptTrip handler:', error.message);
-                socket.emit('acceptTripResponse', { error: 'An error occurred while processing the trip' });
-            }
-        });
+//             } catch (error) {
+//                 console.error('Error in acceptTrip handler:', error.message);
+//                 socket.emit('acceptTripResponse', { error: 'An error occurred while processing the trip' });
+//             }
+//         });
 
-        socket.on('disconnect', () => {
-            console.log('User disconnected');
-        });
-    });
-};
+//         socket.on('disconnect', () => {
+//             console.log('User disconnected');
+//         });
+//     });
+// };
 
 //const mongoose = require('mongoose');  // Ensure mongoose is imported
 
@@ -102,6 +102,6 @@ const driverDataHandler = (io) => {
 
 
 module.exports = {
-    tripStatusHandler,
+    //tripStatusHandler,
     driverDataHandler
 };

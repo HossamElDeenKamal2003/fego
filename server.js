@@ -75,7 +75,8 @@ const book = require("./router/bookTrip/bookingRouting");
 const userProfile = require("./router/userProfile/patchUser");
 const driverProfile = require("./router/userProfile/patchDriver");
 const prices = require("./router/bookTrip/priceRouter");
-const createChat = require("./router/chatingRouter/createChat")
+const createChat = require("./router/chatingRouter/createChat");
+const admin = require('./router/admin/adminRouters');
 // Middleware for static files
 app.use("/uploads", express.static(uploadDir));
 
@@ -87,6 +88,7 @@ app.use("/user-profile", userProfile);
 app.use("/driverprofile", driverProfile);
 app.use("/prices", prices);
 app.use("/create", createChat);
+app.use('/admin', admin);
 // Define a root route to serve an EJS page (optional)
 app.get("/", (req, res) => {
     res.send("Express");
@@ -203,10 +205,24 @@ tripSocketHandler(io);
 
 driverSocketHandler(io); // Driver-specific WebSocket handler
 chatHandler(io);
-tripStatusHandler(io);
+//tripStatusHandler(io);
 driverDataHandler(io);
 global.io = io;
+io.on('connection', (socket) => {
+    console.log('A user connected');
+    socket.on('joinRoom', ({ driverId, userId }) => {
+        if (driverId) {
+            socket.join(driverId); // Join driver room
+        }
+        if (userId) {
+            socket.join(userId); // Join user room
+        }
+    });
 
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
+});
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
