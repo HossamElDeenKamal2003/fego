@@ -11,6 +11,7 @@ const getAllTrips = async function(req, res){
         const allTrips = await bookModel.find();
         if (io) {
             io.emit('getTrips', allTrips);
+            console.log('connection to get trips');
         } else {
             console.log('io is not initialized');
         }
