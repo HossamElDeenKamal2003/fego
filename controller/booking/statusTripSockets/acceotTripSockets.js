@@ -10,11 +10,10 @@ const tripStatusHandler = (io) => {
 
         // Handle acceptTrip event  
         socket.on('acceptTrip', async (data) => {
-            const tripId = data.tripId;
+            const tripId = data.tripId ? new mongoose.Types.ObjectId(data.tripId) : null;
             const driverId = data.driverId ? new mongoose.Types.ObjectId(data.driverId) : null;
-            console.log('before try',tripId, driverId);
+
             try {
-                console.log('after try', tripId, driverId);
                 const tripBooking = await bookModel.findById(tripId);
 
                 if (!tripBooking) {
@@ -24,22 +23,19 @@ const tripStatusHandler = (io) => {
 
                 // Update the status to 'accepted'
                 tripBooking.status = 'accepted';
-                const findDriver = await detailTrip.findOne({ _id: driverId });
-                const driverLocation = await driverDestination.findOne({ driverId: driverId });
 
-                if (!findDriver) {
-                    socket.emit('driverDataResponse', { error: 'Driver not found' });
-                    return;
+                // Delete the trip from pending model using _id
+                const deletingPendingTrip = await pendingModel.findByIdAndDelete(tripId); 
+                if (!deletingPendingTrip) {
+                    console.warn(`Pending trip with _id ${tripId} not found in pendingModel`);
                 }
-                
-                if (!driverLocation) {
-                    socket.emit('driverDataResponse', { error: 'Driver location not found' });
+
+                const findDriver = await detailTrip.findOne({ _id: driverId });
+                const driverLocation = await driverDestination.findOne({ driverId });
+
+                if (!findDriver || !driverLocation) {
+                    socket.emit('acceptTripResponse', { error: 'Driver or Driver location not found' });
                     return;
-                }
-                // Find and delete the trip from pendingModel
-                const deletedPendingTrip = await pendingModel.findByIdAndDelete(tripId);
-                if (!deletedPendingTrip) {
-                    console.warn(`Trip ${tripId} not found in pendingModel`);
                 }
 
                 // Save the updated booking

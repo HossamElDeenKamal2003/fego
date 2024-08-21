@@ -15,17 +15,17 @@ const tripSocketHandler = (socketIoInstance) => {
                 io.emit('tripsUpdate', trips); // Emit trips to all connected clients
             } catch (error) {
                 console.error('Error fetching trips:', error);
-                io.emit('error', { message: 'INTERNAL SERVER ERROR' });
+                socket.emit('error', { message: 'INTERNAL SERVER ERROR' });
             }
         };
 
         // Emit all trips initially when a user connects
         emitTrips();
 
-        // Set up change stream to watch for changes in the collection
+        // Set up change stream to watch for changes in the trip collection
         const changeStream = bookModel.watch();
 
-        changeStream.on('change', (change) => {
+        changeStream.on('change', async (change) => {
             console.log('Change detected:', change);
             // Emit updated trips data on change
             emitTrips();
@@ -34,7 +34,8 @@ const tripSocketHandler = (socketIoInstance) => {
         // Handle disconnection
         socket.on('disconnect', () => {
             console.log('A user disconnected from trips');
-            changeStream.close(); // Close change stream when user disconnects
+            // It's good practice to close the change stream when a client disconnects
+            changeStream.close();
         });
     });
 };
