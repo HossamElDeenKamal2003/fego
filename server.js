@@ -14,11 +14,9 @@ const { updateLocation } = require("./controller/booking/driverDest");
 const socketHandler = require('./controller/booking/offerWebsocket');
 const offerController = require('./controller/booking/offers')
 const driverSocketHandler = require('./controller/booking/driverWebsocket');
-//const tripSocketHandler = require('./controller/booking/allTripswebSocket');
+const tripSocketHandler = require('./controller/booking/allTripswebSocket');
 const chatHandler = require('./controller/booking/chating/chatWebsocket');
 const {tripStatusHandler,driverDataHandler} = require('./controller/booking/statusTripSockets/acceotTripSockets');
-const { getAllTrips, allTipsHandler } = require('./controller/booking/allTripswebSocket'); // Import your module
-
 //const driverDataHandler = require('./controller/booking/statusTripSockets/acceotTripSockets');
 dotenv.config();
 console.log(process.env.NODE_ENV);
@@ -201,8 +199,7 @@ offerController.setSocketInstance(io);
 // Initialize WebSocket handler
 // socketHandler(io);
 socketHandler(io);
-//tripSocketHandler(io);
-allTipsHandler(io);
+tripSocketHandler(io);
 
 driverSocketHandler(io); // Driver-specific WebSocket handler
 chatHandler(io);
