@@ -3,7 +3,7 @@ const {
     findDrivers,
     bookTrip,
     updateStatus,
-    //acceptTrip,
+    acceptTrip,
     startTrip,
     canceledTrip, // Correct function name
     endTrip,
@@ -23,7 +23,7 @@ router.post('/bookTrip', bookTrip);
 router.patch('/cost', calculateCost);
 router.patch('/updatelocation', updateLocation);
 router.patch('/updatestatus', updateStatus);
-//router.patch('/accept-trip', acceptTrip);
+router.patch('/accept-trip', acceptTrip);
 router.patch('/start-trip', startTrip);
 router.patch('/end-trip', endTrip);
 router.patch('/cancelled-trip', canceledTrip); // Correct function name

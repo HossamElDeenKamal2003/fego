@@ -5,6 +5,7 @@ const detailTrip = require('../../model/regestration/driverModel.js');
 const pendingModel = require('../../model/booking/pendingTrips.js')
 const booking = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
+const user = require('../../model/regestration/userModel.js');
 const io = require('socket.io');
 //const { io } = require('../../server.js'); // Adjust this import according to your setup
 
@@ -233,51 +234,55 @@ const calculateCost = async function(req, res) {
     }
 };
 
-// Accept a trip
-// const acceptTrip = async (req, res) => {
-//     const { tripId, driverId } = req.body;
+//Accept a trip
+const acceptTrip = async (req, res) => {
+    const { tripId, driverId, userId } = req.body;
 
-//     try {
-//         // Validate input
-//         if (!tripId || !driverId) {
-//             return res.status(400).json({ message: 'data require' });
-//         }
+    try {
+        // Validate input
+        if (!tripId || !driverId || !userId) {
+            return res.status(400).json({ message: 'data require' });
+        }
 
-//         // Fetch the driver and booking by their IDs
-//         const driverBook = await detailTrip.findOne({ _id: driverId });
-//         const booking = await bookModel.findOne({ _id: tripId });
-//         const driverLocation = await driverDestination.findOne({ driverId: driverId });
+        // Fetch the driver and booking by their IDs
+        const driverBook = await detailTrip.findOne({ _id: driverId });
+        const booking = await bookModel.findOne({ _id: tripId });
+        const userData = await user.findOne({ _id: userId });
+        const driverLocation = await driverDestination.findOne({ driverId: driverId });
 
-//         if (!booking) {
-//             return res.status(404).json({ message: 'Trip not found' });
-//         }
-//         if (!driverBook) {
-//             return res.status(404).json({ message: 'Driver not found' });
-//         }
+        if (!booking) {
+            return res.status(404).json({ message: 'Trip not found' });
+        }
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
+        }
+        if(!user){
+            return res.status(404).json({message: 'user not found'});
+        }
 
-//         // Update the status to 'accepted'
-//         booking.status = 'accepted';
+        // Update the status to 'accepted'
+        booking.status = 'accepted';
 
-//         // Find and delete the trip from pendingModel
-//         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-//         if (!deletedPendingTrip) {
-//             console.warn(`Trip ${tripId} not found in pendingModel`);
-//         }
+        // Find and delete the trip from pendingModel
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+        if (!deletedPendingTrip) {
+            console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
 
-//         // Save the updated booking
-//         const updatedBooking = await booking.save();
+        // Save the updated booking
+        const updatedBooking = await booking.save();
 
-//         // Emit an event to notify clients
-//         if (global.io) {
-//             global.io.emit('tripUpdated', { updatedBooking, driverBook, driverLocation });
-//         }
+        // Emit an event to notify clients
+        // if (global.io) {
+        //     global.io.emit('tripUpdated', { updatedBooking, driverBook, driverLocation });
+        // }
 
-//         res.status(200).json({ updatedBooking, driverBook, driverLocation });
-//     } catch (error) {
-//         console.log(error.message);
-//         res.status(500).json({ message: error.message });
-//     }
-// };
+        res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 
@@ -494,7 +499,7 @@ const allTrips = async function(req, res){
 module.exports = {
     findDrivers,
     bookTrip,
-    //acceptTrip,
+    acceptTrip,
     updateStatus,
     cost,
     startTrip,
