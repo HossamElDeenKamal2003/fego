@@ -14,7 +14,7 @@ const getAllTrips = async function(req, res){
         } else {
             console.log('io is not initialized');
         }
-        res.json(allTrips);
+        res.status(200).json(allTrips);
     }
     catch (error) {
         console.log(error);
