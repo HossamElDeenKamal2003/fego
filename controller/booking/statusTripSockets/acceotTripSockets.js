@@ -60,6 +60,29 @@ const mongoose = require('mongoose');  // Ensure mongoose is imported
 // };
 
 //const mongoose = require('mongoose');  // Ensure mongoose is imported
+// socket-io-instance.js
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+
+// Create an Express application
+const app = express();
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+const io = socketIo(server, { transports: ['websocket'] });
+
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+
+});
+
+module.exports = io;
 
 const driverDataHandler = (io) => {
     io.on('connection', (socket) => {
@@ -103,5 +126,6 @@ const driverDataHandler = (io) => {
 
 module.exports = {
     //tripStatusHandler,
-    driverDataHandler
+    driverDataHandler,
+    io
 };

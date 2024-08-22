@@ -6,71 +6,8 @@ const pendingModel = require('../../model/booking/pendingTrips.js')
 const booking = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
 const user = require('../../model/regestration/userModel.js');
-const io = require('socket.io');
-//const { io } = require('../../server.js'); // Adjust this import according to your setup
-
-// const findDriversInternal = async function(req,res, vehicleType, latitude, longitude){
-//     try{
-
-//     }
-//     catch(error){
-//         console.log(error);
-//     }
-// }
-// Find nearby drivers
-// const findDrivers = async (req, res) => {
-//     const { vehicleType, latitude, longitude } = req.body;
-
-//     // Validate input
-//     if (!vehicleType || latitude === undefined || longitude === undefined) {
-//         return res.status(400).json({ error: 'Vehicle type, latitude, and longitude are required' });
-//     }
-
-//     try {
-//         // First, check for drivers with the matching vehicle type
-//         const vehicles = await driverDestination.find({ vehicleType });
-        
-//         if (vehicles.length === 0) {
-//             return res.status(404).json({ error: 'No vehicles match your choice' });
-//         }
-
-//         // Now, find nearby drivers based on location and vehicle type
-//         const drivers = await driverDestination.find({
-//             vehicleType,
-//             location: {
-//                 $near: {
-//                     $geometry: {
-//                         type: "Point",
-//                         coordinates: [longitude, latitude]
-//                     },
-//                     $maxDistance: 5000 // Distance in meters, 5km = 5000m
-//                 }
-//             }
-//         });
-
-//         if (drivers.length === 0) {
-//             return res.status(404).json({ error: 'No drivers available in your area' });
-//         }
-
-//         // Find detailed information for each nearby driver
-//         const driverDetails = await Promise.all(
-//             drivers.map(async (driver) => {
-//                 const detail = await detailTrip.findOne({ _id: driver.driverId });
-//                 return {
-//                     ...driver.toObject(),
-//                     ...detail?.toObject() // Use optional chaining to avoid errors if detail is not found
-//                 };
-//             })
-//         );
-
-//         // Emit driver details to all connected clients via WebSocket
-//         global.io.emit('driversFound', driverDetails);
-//         return res.status(200).json(driverDetails);
-//     } catch (error) {
-//         console.error('Error finding drivers:', error);
-//         return res.status(500).json({ error: 'INTERNAL SERVER ERROR' });
-//     }
-// }
+const io = require('../../server.js');
+let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
     // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
@@ -244,7 +181,7 @@ const acceptTrip = async (req, res) => {
             return res.status(400).json({ message: 'data require' });
         }
 
-        // Fetch the driver and booking by their IDs
+        // Fetch the driver, booking, user, and driver location by their IDs
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const booking = await bookModel.findOne({ _id: tripId });
         const userData = await user.findOne({ _id: userId });
@@ -256,8 +193,8 @@ const acceptTrip = async (req, res) => {
         if (!driverBook) {
             return res.status(404).json({ message: 'Driver not found' });
         }
-        if(!user){
-            return res.status(404).json({message: 'user not found'});
+        if (!userData) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
         // Update the status to 'accepted'
@@ -272,10 +209,10 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
-        // Emit an event to notify clients
-        // if (global.io) {
-        //     global.io.emit('tripUpdated', { updatedBooking, driverBook, driverLocation });
-        // }
+        if (io) {
+            io.to(driverId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+            io.to(userId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+        }
 
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     } catch (error) {
@@ -283,6 +220,7 @@ const acceptTrip = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 

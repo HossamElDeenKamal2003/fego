@@ -209,20 +209,14 @@ chatHandler(io);
 driverDataHandler(io);
 global.io = io;
 io.on('connection', (socket) => {
-    console.log('A user connected');
-    socket.on('joinRoom', ({ driverId, userId }) => {
-        if (driverId) {
-            socket.join(driverId); // Join driver room
-        }
-        if (userId) {
-            socket.join(userId); // Join user room
-        }
-    });
+    console.log('A user connected:', socket.id);
 
     socket.on('disconnect', () => {
-        console.log('A user disconnected');
+        console.log('User disconnected:', socket.id);
     });
+
 });
+module.exports = { io };
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
