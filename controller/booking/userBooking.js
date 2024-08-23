@@ -182,7 +182,9 @@ io.on('connection', (socket) => {
     console.log('New connection:', socket.id);
 
     // When a user connects
-    socket.on('register', (userId) => { 
+    socket.on('register', (userId, driverId) => { 
+        console.log('User registered:', userId);
+        console.log('driver regester : ', driverId);
         connectedUsers[userId] = socket.id; // Store the userId and socketId in the object
         connectedUsers[driverId] = socket.id
     });
@@ -258,10 +260,6 @@ const acceptTrip = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-
-
-
 
 
 const cancelledTripbeforestart = async function(req,res){
