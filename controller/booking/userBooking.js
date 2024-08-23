@@ -209,11 +209,10 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
-        if (io) {
-            io.to(driverId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
-            io.to(userId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+        if (global.io) {
+            global.io.to(driverId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+            global.io.to(userId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
         }
-
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     } catch (error) {
         console.log(error.message);
