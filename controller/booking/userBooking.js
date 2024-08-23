@@ -211,8 +211,17 @@ const acceptTrip = async (req, res) => {
 
         if (global.io) {
             console.log(driverId, "===========", userId);
-            global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
-            global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+
+            const driverSocketId = connectedUsers.get(driverId);
+            const userSocketId = connectedUsers.get(userId);
+
+            if (driverSocketId) {
+                global.io.to(driverSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+            }
+
+            if (userSocketId) {
+                global.io.to(userSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
+            }
         }
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     } catch (error) {
