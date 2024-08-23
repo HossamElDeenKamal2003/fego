@@ -181,21 +181,25 @@ const connectedUsers = {}; // Object to store userId and socketId
 io.on('connection', (socket) => {
     console.log('New connection:', socket.id);
 
-    // When a user connects
+    // When a user connects (registers their userId and driverId)
     socket.on('register', (userId, driverId) => { 
-        console.log('User registered:', userId);
-        console.log('driver regester : ', driverId);
-        connectedUsers[userId] = socket.id; // Store the userId and socketId in the object
-        connectedUsers[driverId] = socket.id
+        if (userId) {
+            console.log('User registered:', userId);
+            connectedUsers[userId] = socket.id; // Store userId and socketId
+        }
+        if (driverId) {
+            console.log('Driver registered:', driverId);
+            connectedUsers[driverId] = socket.id; // Store driverId and socketId
+        }
     });
 
     // When a user disconnects
     socket.on('disconnect', () => {
-        // Remove userId from connectedUsers if necessary
-        for (const [userId, socketId] of Object.entries(connectedUsers)) {
+        // Find and remove the userId or driverId associated with this socket
+        for (const [id, socketId] of Object.entries(connectedUsers)) {
             if (socketId === socket.id) {
-                delete connectedUsers[userId]; // Remove the user from the object
-                delete connectedUsers[driverId];
+                console.log(`Removing connection for id: ${id}`);
+                delete connectedUsers[id]; // Remove user or driver from connectedUsers
                 break;
             }
         }
@@ -239,11 +243,12 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
+        // Send the tripAccepted event to both driverId and userId
         if (global.io) {
             console.log(driverId, "===========", userId);
 
-            const driverSocketId = connectedUsers[driverId]; // Access socketId using the object
-            const userSocketId = connectedUsers[userId]; // Access socketId using the object
+            const driverSocketId = connectedUsers[driverId]; // Get driver's socketId
+            const userSocketId = connectedUsers[userId]; // Get user's socketId
 
             if (driverSocketId) {
                 global.io.to(driverSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
@@ -260,6 +265,7 @@ const acceptTrip = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 const cancelledTripbeforestart = async function(req,res){
