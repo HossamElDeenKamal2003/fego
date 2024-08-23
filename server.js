@@ -208,30 +208,31 @@ chatHandler(io);
 //tripStatusHandler(io);
 driverDataHandler(io);
 global.io = io;
-const connectedUsers = new Map(); // Map to store userId -> socketId
+//const io = new Server(server);
+const connectedUsers = {}; // Change from Map to an object
 
-// Setup WebSocket connection
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    console.log('New connection:', socket.id);
 
-    socket.on('register', (data) => {
-        const { userId, driverId } = data;
-        if (userId) connectedUsers.set(userId, socket.id);
-        if (driverId) connectedUsers.set(driverId, socket.id);
-        console.log(`User registered: ${data}`);
+    // When a user connects
+    socket.on('register', (userId) => {
+        connectedUsers[userId] = socket.id; // Store the userId and socketId in the object
     });
 
+    // When a user disconnects
     socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        // Remove user from the map
-        for (let [key, value] of connectedUsers.entries()) {
-            if (value === socket.id) {
-                connectedUsers.delete(key);
+        // Remove userId from connectedUsers if necessary
+        for (const [userId, socketId] of Object.entries(connectedUsers)) {
+            if (socketId === socket.id) {
+                delete connectedUsers[userId]; // Remove the user from the object
                 break;
             }
         }
     });
 });
+
+module.exports = { connectedUsers, io };
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

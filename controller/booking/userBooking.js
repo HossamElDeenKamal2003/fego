@@ -6,7 +6,11 @@ const pendingModel = require('../../model/booking/pendingTrips.js')
 const booking = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
 const user = require('../../model/regestration/userModel.js');
-const io = require('../../server.js');
+const http = require('http');
+const server = http.createServer();
+const { Server } = require("socket.io");
+const io = new Server(server);
+
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
     // Validate input
@@ -172,13 +176,37 @@ const calculateCost = async function(req, res) {
 };
 
 //Accept a trip
+const connectedUsers = {}; // Object to store userId and socketId
+
+io.on('connection', (socket) => {
+    console.log('New connection:', socket.id);
+
+    // When a user connects
+    socket.on('register', (userId) => { 
+        connectedUsers[userId] = socket.id; // Store the userId and socketId in the object
+        connectedUsers[driverId] = socket.id
+    });
+
+    // When a user disconnects
+    socket.on('disconnect', () => {
+        // Remove userId from connectedUsers if necessary
+        for (const [userId, socketId] of Object.entries(connectedUsers)) {
+            if (socketId === socket.id) {
+                delete connectedUsers[userId]; // Remove the user from the object
+                delete connectedUsers[driverId];
+                break;
+            }
+        }
+    });
+});
+
 const acceptTrip = async (req, res) => {
     const { tripId, driverId, userId } = req.body;
 
     try {
         // Validate input
         if (!tripId || !driverId || !userId) {
-            return res.status(400).json({ message: 'data require' });
+            return res.status(400).json({ message: 'Data required' });
         }
 
         // Fetch the driver, booking, user, and driver location by their IDs
@@ -212,8 +240,8 @@ const acceptTrip = async (req, res) => {
         if (global.io) {
             console.log(driverId, "===========", userId);
 
-            const driverSocketId = connectedUsers.get(driverId);
-            const userSocketId = connectedUsers.get(userId);
+            const driverSocketId = connectedUsers[driverId]; // Access socketId using the object
+            const userSocketId = connectedUsers[userId]; // Access socketId using the object
 
             if (driverSocketId) {
                 global.io.to(driverSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
@@ -223,12 +251,15 @@ const acceptTrip = async (req, res) => {
                 global.io.to(userSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
             }
         }
+
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     } catch (error) {
         console.log(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
+
 
 
 
