@@ -1,16 +1,18 @@
 const Message = require('../../../model/booking/chating/newChatModel');
 
 const chatHandler = (io) => {
-    const onlineUsers = {};
+    const onlineUsers = {}; // { userId: socketId }
     let onlineCount = 0;
 
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id);
 
-        // Handle user joining a room (joining their own username room)
+        // Handle user joining a room
         socket.on('user-joined', (obj) => {
             socket.username = obj.username;
-            socket.join(obj.username); // Join room using the username
+            socket.userId = obj.userid;
+            onlineUsers[obj.userid] = socket.id; // Map userId to socketId
+            socket.join(obj.username); // Optionally join room
             console.log('User joined room:', socket.username);
         });
 
@@ -19,7 +21,7 @@ const chatHandler = (io) => {
             socket.name = obj.userid;
 
             if (!onlineUsers.hasOwnProperty(obj.userid)) {
-                onlineUsers[obj.userid] = obj.username;
+                onlineUsers[obj.userid] = socket.id;
                 onlineCount++;
             }
 
@@ -59,20 +61,12 @@ const chatHandler = (io) => {
                 });
                 await message.save();
 
-                // Broadcast message to all connected clients
-                io.emit('chat', { 
-                    msg: obj.msg,
-                    from: obj.from,
-                    to: obj.to,
-                    media: obj.media,
-                    mediaType: obj.mediaType
-                });
-
-                console.log({
+                // Send message to the intended recipient
+                emitToUser(obj.to, 'chat', {
                     msg: obj.msg,
                     from: obj.from,
                     media: obj.media,
-                    mediaType: obj.mediaType
+                    mediaType: obj.mediaType,
                 });
 
                 // Optionally, notify the sender that the message was sent successfully
@@ -84,6 +78,16 @@ const chatHandler = (io) => {
             }
         });
     });
+
+    // Function to emit message to a specific user
+    function emitToUser(userId, event, message) {
+        const socketId = onlineUsers[userId];
+        if (socketId) {
+            io.sockets.sockets.get(socketId)?.emit(event, message);
+        } else {
+            console.log(`Recipient with ID ${userId} is not online.`);
+        }
+    }
 };
 
 module.exports = chatHandler;
