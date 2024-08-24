@@ -69,6 +69,7 @@ io.on('connection', (socket) => {
         console.log({
             msg: obj.msg,
             from: obj.from,
+            to: obj.to,
             media: obj.media,
             mediaType: obj.mediaType
         });
