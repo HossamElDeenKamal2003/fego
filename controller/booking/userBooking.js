@@ -176,35 +176,6 @@ const calculateCost = async function(req, res) {
 };
 
 //Accept a trip
-const connectedUsers = {}; // Object to store userId and socketId
-
-io.on('connection', (socket) => {
-    console.log('New connection:', socket.id);
-
-    // When a user connects (registers their userId and driverId)
-    socket.on('register', (userId, driverId) => { 
-        if (userId) {
-            console.log('User registered:', userId);
-            connectedUsers[userId] = socket.id; // Store userId and socketId
-        }
-        if (driverId) {
-            console.log('Driver registered:', driverId);
-            connectedUsers[driverId] = socket.id; // Store driverId and socketId
-        }
-    });
-
-    // When a user disconnects
-    socket.on('disconnect', () => {
-        // Find and remove the userId or driverId associated with this socket
-        for (const [id, socketId] of Object.entries(connectedUsers)) {
-            if (socketId === socket.id) {
-                console.log(`Removing connection for id: ${id}`);
-                delete connectedUsers[id]; // Remove user or driver from connectedUsers
-                break;
-            }
-        }
-    });
-});
 
 const acceptTrip = async (req, res) => {
     const { tripId, driverId, userId } = req.body;
@@ -246,17 +217,8 @@ const acceptTrip = async (req, res) => {
         // Send the tripAccepted event to both driverId and userId
         if (global.io) {
             console.log(driverId, "===========", userId);
-
-            const driverSocketId = connectedUsers[driverId]; // Get driver's socketId
-            const userSocketId = connectedUsers[userId]; // Get user's socketId
-
-            if (driverSocketId) {
-                global.io.to(driverSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
-            }
-
-            if (userSocketId) {
-                global.io.to(userSocketId).emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
-            }
+            global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData })
+            global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
         }
 
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
