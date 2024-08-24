@@ -57,7 +57,6 @@ io.on('connection', (socket) => {
         media: obj.media,
         mediaType: obj.mediaType
         });
-
         await message.save();
 
         // Send message to the intended recipient
@@ -67,7 +66,12 @@ io.on('connection', (socket) => {
         media: obj.media,
         mediaType: obj.mediaType
         });
-        
+        console.log({
+            msg: obj.msg,
+            from: obj.from,
+            media: obj.media,
+            mediaType: obj.mediaType
+        });
         // Optionally, notify the sender that the message was sent
         socket.emit('message-sent', message);
 
