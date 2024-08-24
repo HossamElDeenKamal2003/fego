@@ -1,6 +1,6 @@
-//const { Conversation, Message } = require('../../../model/booking/chating'); // Import your models
+const { Conversation, Message } = require('../../../model/booking/chating/chatModel');
 
-const socketHandler = (io) => {
+const chatHandler = (io) => {
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
@@ -66,4 +66,4 @@ io.on('connection', (socket) => {
 });
 };
 
-module.exports = socketHandler;
+module.exports = chatHandler;
