@@ -15,7 +15,7 @@ const socketHandler = require('./controller/booking/offerWebsocket');
 const offerController = require('./controller/booking/offers')
 const driverSocketHandler = require('./controller/booking/driverWebsocket');
 const tripSocketHandler = require('./controller/booking/allTripswebSocket');
-const chatHandler = require('./controller/booking/chating/chatWebsocket');
+const chatHandler = require('./controller/booking/chating/newChatHandler');
 const {tripStatusHandler,driverDataHandler} = require('./controller/booking/statusTripSockets/acceotTripSockets');
 //const driverDataHandler = require('./controller/booking/statusTripSockets/acceotTripSockets');
 dotenv.config();

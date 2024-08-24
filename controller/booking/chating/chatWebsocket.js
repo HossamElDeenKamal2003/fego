@@ -8,8 +8,8 @@ io.on('connection', (socket) => {
     socket.on('joinConversation', async ({ conversationId }) => {
     try {
         socket.join(conversationId);
-        console.log(`User joined conversation: ${conversationId}`);
-    } catch (err) {
+        console.log(`User  joined conversation: ${conversationId}`);
+    } catch (err) { 
         console.error('Error joining conversation:', err);
     }
     });
