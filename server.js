@@ -17,6 +17,7 @@ const driverSocketHandler = require('./controller/booking/driverWebsocket');
 const tripSocketHandler = require('./controller/booking/allTripswebSocket');
 const chatHandler = require('./controller/booking/chating/newChatHandler');
 const {tripStatusHandler,driverDataHandler} = require('./controller/booking/statusTripSockets/acceotTripSockets');
+//const {updateLocation} = require('./controller/booking/driverDest');
 //const driverDataHandler = require('./controller/booking/statusTripSockets/acceotTripSockets');
 dotenv.config();
 console.log(process.env.NODE_ENV);
@@ -195,6 +196,7 @@ const userSearches = new Map(); // Map<socketId, searchCriteria>
 //         console.log("A user disconnected");
 //     });
 // });
+const locationHandler = require('./controller/booking/driverDest'); // Adjust the path as necessary
 
 offerController.setSocketInstance(io);
 
@@ -207,27 +209,22 @@ driverSocketHandler(io); // Driver-specific WebSocket handler
 chatHandler(io);
 //tripStatusHandler(io);
 driverDataHandler(io);
+locationHandler(io) // Attaches the socket instance to the HTTP server
+
+//updateLocation(io);
+
 global.io = io;
 //const io = new Server(server);
 const connectedUsers = {}; // Change from Map to an object
 
 io.on('connection', (socket) => {
-    console.log('New connection:', socket.id);
+    console.log('New connection');
 
-    // When a user connects
-    socket.on('register', (userId) => {
-        connectedUsers[userId] = socket.id; // Store the userId and socketId in the object
-    });
 
     // When a user disconnects
     socket.on('disconnect', () => {
         // Remove userId from connectedUsers if necessary
-        for (const [userId, socketId] of Object.entries(connectedUsers)) {
-            if (socketId === socket.id) {
-                delete connectedUsers[userId]; // Remove the user from the object
-                break;
-            }
-        }
+        console.log('disconnected')
     });
 });
 

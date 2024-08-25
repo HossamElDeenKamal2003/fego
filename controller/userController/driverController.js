@@ -15,6 +15,8 @@ const signup = async function(req, res) {
             id,
             carModel,
             licence_expire_date,
+            carNumber,
+            carColor,
             vehicleType,
             password,
             latitude,
@@ -26,7 +28,7 @@ const signup = async function(req, res) {
         const driver_licence_image = req.files?.['driver_licence_image'] ? req.files['driver_licence_image'][0].path : null;
         const profile_image = req.files?.['profile_image'] ? req.files['profile_image'][0].path : null;
 
-        if (!profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id || !latitude || !longitude) {
+        if (!profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id ) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
@@ -47,6 +49,8 @@ const signup = async function(req, res) {
             phoneNumber,
             email,
             id,
+            carNumber,
+            carColor,
             carModel,
             licenseImage,
             driver_licence_image,
@@ -62,6 +66,8 @@ const signup = async function(req, res) {
             profile_image: newDriver.profile_image,
             username: newDriver.username,
             carModel: newDriver.carModel,
+            carNumber: newDriver.carNumber,
+            carColor: newDriver.carColor,
             vehicleType: newDriver.vehicleType,
             location: {
                 type: "Point",
@@ -88,7 +94,9 @@ const signup = async function(req, res) {
                 licence_expire_date: newDriver.licence_expire_date,
                 vehicleType: newDriver.vehicleType,
                 location: driverLocation.location,
-                driverId: driverLocation.driverId
+                driverId: driverLocation.driverId,
+                carNumber: carNumber,
+                carColor: carColor
             }
         });
     } catch (error) {

@@ -1,32 +1,47 @@
 const mongoose = require('mongoose');
 const destDriver = require('../../model/booking/driversDestination');
-//const io = require('../../server'); 
+const { Server } = require('socket.io');
 
-const { ObjectId } = mongoose.Types;
+const locationHandler = (io) => {
+    io.on('connection', (socket) => {
+        console.log("Driver Connected to update location");
 
-const updateLocation = async (driverId, longitude, latitude) => {
-    if (!driverId || longitude === undefined || latitude === undefined) {
-        throw new Error('Driver ID, longitude, and latitude are required');
-    }
+        socket.on('updateLocation', async (data) => {
+            try {
+                const { driverId, longitude, latitude } = data;
 
-    if (!ObjectId.isValid(driverId)) {
-        throw new Error('Invalid Driver ID');
-    }
+                if (!driverId || typeof longitude !== 'number' || typeof latitude !== 'number') {
+                    socket.emit('error', { message: 'Driver ID, longitude, and latitude are required and must be numbers' });
+                    return;
+                }
 
-    try {
-        const result = await destDriver.findOneAndUpdate(
-            { _id: new ObjectId(driverId) },
-            { location: { type: "Point", coordinates: [longitude, latitude] } },
-            { new: true }
-        );
+                if (!mongoose.isValidObjectId(driverId)) {
+                    socket.emit('error', { message: 'Invalid Driver ID' });
+                    return;
+                }
 
-        if (!result) {
-            throw new Error('Driver not found');
-        }
+                const result = await destDriver.findOneAndUpdate(
+                    { _id: driverId },
+                    { location: { type: "Point", coordinates: [longitude, latitude] } },
+                    { new: true }
+                );
 
-        return result;
-    } catch (error) {
-        throw error;
-    }
+                if (!result) {
+                    socket.emit('error', { message: 'Driver not found' });
+                    return;
+                }
+
+                io.emit('location-updated', {
+                    driverId,
+                    location: result.location
+                });
+
+            } catch (error) {
+                console.error('Error updating location:', error);
+                socket.emit('error', { message: 'Error updating location' });
+            }
+        });
+    });
 };
-module.exports = { updateLocation };
+
+module.exports = locationHandler;

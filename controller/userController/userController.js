@@ -35,7 +35,7 @@ const sendOtp = async (phoneNumber, otp) => {
 
 // Sign-up function
 const signUp = async (req, res) => {
-    const { username, email, phoneNumber, password } = req.body;
+    const { username, email, phoneNumber, password, profile_image } = req.body;
 
     if (!username || !email || !phoneNumber || !password) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -50,9 +50,11 @@ const signUp = async (req, res) => {
         if (existNumber) {
             return res.status(400).json({ message: 'Phone number already exists' });
         }
+        const profile_image_url = req.file.path;
 
         const newUser = new User({
             username,
+            profile_image: profile_image_url, // Save the Cloudinary URL
             email,
             phoneNumber,
             password: bcrypt.hashSync(req.body.password, 10)
@@ -80,6 +82,7 @@ const signUp = async (req, res) => {
 
         const userData = {
             id: newUser._id,
+            profile_image: profile_image,
             username: newUser.username,
             email: newUser.email,
             phoneNumber: newUser.phoneNumber

@@ -64,7 +64,7 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
 }
 // Book a trip
 const bookTrip = async (req, res) => {
-    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time } = req.body;
+    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType } = req.body;
     try {
         // Validate input
         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined) {
@@ -79,6 +79,7 @@ const bookTrip = async (req, res) => {
             time: time,
             username: username,
             destination: destination,
+            vehicleType: vehicleType,
             pickupLocation: {
                 type: "Point",
                 coordinates: [longitude, latitude]
@@ -98,6 +99,7 @@ const bookTrip = async (req, res) => {
             time: time,
             username: username,
             destination: destination,
+            vehicleType: vehicleType,
             pickupLocation: {
                 type: "Point",
                 coordinates: [longitude, latitude]
