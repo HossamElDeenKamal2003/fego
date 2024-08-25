@@ -7,9 +7,10 @@ const locationHandler = (io) => {
         console.log("Driver Connected to update location");
 
         socket.on('updateLocation', async (data) => {
+            console.log('before : ', data);
             try {
                 const { driverId, longitude, latitude } = data;
-
+                console.log('after : ', data);
                 if (!driverId || typeof longitude !== 'number' || typeof latitude !== 'number') {
                     socket.emit('error', { message: 'Driver ID, longitude, and latitude are required and must be numbers' });
                     return;
