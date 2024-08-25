@@ -9,6 +9,12 @@ const destDriverSchema = new mongoose.Schema({
     username:{
         type: String,
     },
+    carNumber:{
+        type: String,
+    },
+    carColor:{
+        type: String,
+    },
     carModel:{
         type: String,
     },

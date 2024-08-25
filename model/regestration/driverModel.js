@@ -16,6 +16,14 @@ const driverSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    carNumber:{
+        type: String,
+        required: true
+    },
+    carColor:{
+        type: String,
+        required: true
+    },
     vehicleType: {
         type: String,
         required: true,

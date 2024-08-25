@@ -205,7 +205,7 @@ offerController.setSocketInstance(io);
 socketHandler(io);
 tripSocketHandler(io);
 
-driverSocketHandler(io); // Driver-specific WebSocket handler
+//driverSocketHandler(io); // Driver-specific WebSocket handler
 chatHandler(io);
 //tripStatusHandler(io);
 driverDataHandler(io);
