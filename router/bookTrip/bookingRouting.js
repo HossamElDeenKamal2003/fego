@@ -15,13 +15,13 @@ const {
     addOffer,
     getOffer
 } = require('../../controller/booking/offers');
-const { updateLocation } = require('../../controller/booking/driverDest');
+//const { updateLocation } = require('../../controller/booking/driverDest');
 const router = express.Router();
 
 router.post('/findDrivers', findDrivers);
 router.post('/bookTrip', bookTrip);
 router.patch('/cost', calculateCost);
-router.patch('/updatelocation', updateLocation);
+//router.patch('/updatelocation', updateLocation);
 router.patch('/updatestatus', updateStatus);
 router.patch('/accept-trip', acceptTrip);
 router.patch('/start-trip', startTrip);
