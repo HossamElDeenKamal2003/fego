@@ -22,7 +22,7 @@ const locationHandler = (io) => {
                 }
 
                 const result = await destDriver.findOneAndUpdate(
-                    { _id: driverId },
+                    { driverId: driverId },
                     { location: { type: "Point", coordinates: [longitude, latitude] } },
                     { new: true }
                 );
