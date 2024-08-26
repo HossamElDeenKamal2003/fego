@@ -1,7 +1,8 @@
 const usersModel = require('../../model/regestration/userModel');
 const driversModel = require('../../model/regestration/driverModel');
 const driverDest = require('../../model/booking/driversDestination');
-const tripsModel = require('../../model/booking/userBooking')
+const tripsModel = require('../../model/booking/userBooking');
+const distance = require('../../model/booking/maxDistance');
 // get all users
 const getAllUsers = async function(req,res){
     try{
@@ -83,6 +84,18 @@ const getDriverlocation = async function(req, res){
 //     }
 // }
 
+const distacne = async function(req,res){
+    const {maxDistance} = req.body;
+    try{
+        const settings = await distance.findOneAndUpdate({}, { maxDistance }, { new: true, upsert: true });
+        res.status(200).json({ message: 'Distance updated successfully', settings });
+    }
+    catch(error){
+        onsole.log(error);
+        res.status(500).json('Error : ', error.message);
+    }
+}
+
 const trips = async function(req, res) {
     try {
         const result = await tripsModel.find();  // Add `await` here
@@ -104,5 +117,6 @@ module.exports = {
     deleteUser,
     deleteDriver,
     getDriverlocation,
-    trips
+    trips,
+    distacne
 }

@@ -10,7 +10,7 @@ const http = require('http');
 const server = http.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
-
+const Distance = require('../../model/booking/maxDistance.js');
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
     // Validate input
@@ -19,6 +19,8 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
     }
 
     try {
+        const settings = await Distance.findOne({});
+        const maxDistance = settings ? settings.maxDistance : 5000; 
         // First, check for drivers with the matching vehicle type
         const vehicles = await driverDestination.find({ vehicleType });
         
@@ -35,7 +37,7 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
                         type: "Point",
                         coordinates: [longitude, latitude]
                     },
-                    $maxDistance: 5000 // Distance in meters, 5km = 5000m
+                    $maxDistance: maxDistance // Use the dynamic maxDistance from settings
                 }
             }
         });

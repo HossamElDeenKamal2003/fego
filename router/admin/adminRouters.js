@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getAllDrivers, deleteUser, deleteDriver, getDriverlocation, trips } = require('../../controller/aminPanel/adminPanel');
+const { getAllUsers, getAllDrivers, deleteUser, deleteDriver, getDriverlocation, trips, distacne } = require('../../controller/aminPanel/adminPanel');
 
+router.post('/update-distance', distacne);
 router.get('/get-users', getAllUsers);
 router.get('/get-drivers', getAllDrivers);
 router.get('/location/:id', getDriverlocation)
