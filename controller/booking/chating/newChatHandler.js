@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
         await message.save();
 
         // Send message to the intended recipient
-        io.to(obj.to).emit('chat', { 
+        io.emit('chat', { 
         msg: obj.msg, 
         from: obj.from,
         media: obj.media,
