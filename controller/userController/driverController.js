@@ -119,8 +119,8 @@ const login = async function(req, res) {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        const valid = bcrypt.compareSync(password, user.password);
+        // if(user.block === true){
+            const valid = bcrypt.compareSync(password, user.password);
         if (!valid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
@@ -143,6 +143,8 @@ const login = async function(req, res) {
                 vehicleType: user.vehicleType
             }
         });
+    //}
+    //res.status(401).json({message: "Not Authorized to login"});
     } catch (error) {
         console.error('Login error:', error);
         return res.status(500).json({ message: 'Internal server error', error: error.message });
@@ -182,8 +184,67 @@ const updatePassword = async function(req, res) {
     }
 };
 
+const patchBlock = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await Driver.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const newBlockValue = !user.block;
+        const updatedUser = await Driver.findOneAndUpdate(
+            { _id: userId },           
+            { block: newBlockValue },   
+            { new: true }               
+        );
+        res.status(200).json(updatedUser); 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const patchAlerts = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await Driver.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Increment the alerts count
+        const updatedUser = await Driver.findOneAndUpdate(
+            { _id: userId },
+            { $inc: { alerts: 1 } },  
+            { new: true }
+        );
+
+        res.status(200).json(updatedUser); 
+    } catch (error) {
+        console.error("Error updating alerts:", error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const DeleteUser = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await Driver.findByIdAndDelete(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User Not Found" });
+        }
+        res.status(200).json({ message: "User Deleted Successfully" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = {
     signup,
     login,
     updatePassword,
+    patchBlock,
+    DeleteUser,
+    patchAlerts
 };

@@ -57,6 +57,8 @@ const signUp = async (req, res) => {
             profile_image: profile_image_url, // Save the Cloudinary URL
             email,
             phoneNumber,
+            block: true,
+            alerts: 0,
             password: bcrypt.hashSync(req.body.password, 10)
         });
         await newUser.save();
@@ -85,6 +87,8 @@ const signUp = async (req, res) => {
             profile_image: profile_image,
             username: newUser.username,
             email: newUser.email,
+            block: newUser.block,
+            alerts: newUser.alerts,
             phoneNumber: newUser.phoneNumber
         };
 
@@ -94,7 +98,64 @@ const signUp = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
-// Verify OTP function
+
+const patchBlock = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const newBlockValue = !user.block;
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: userId },           
+            { block: newBlockValue },   
+            { new: true }               
+        );
+        res.status(200).json(updatedUser); 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const patchAlerts = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        // Increment the alerts count
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: userId },
+            { $inc: { alerts: 1 } },  
+            { new: true }
+        );
+
+        res.status(200).json(updatedUser); 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const DeleteUser = async function(req, res) {
+    const userId = req.params.id;
+    try {
+        const user = await User.findByIdAndDelete(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User Not Found" });
+        }
+        res.status(200).json({ message: "User Deleted Successfully" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 const verifyOtp = async (req, res) => {
     const { phoneNumber, otp } = req.body;
 
@@ -136,22 +197,25 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ message: 'User not found' });
         }
+        // if(user.block === true){
+            const valid = bcrypt.compareSync(password, user.password);
+            if (!valid) {
+                return res.status(401).json({ message: 'Incorrect password' });
+            }
 
-        const valid = bcrypt.compareSync(password, user.password);
-        if (!valid) {
-            return res.status(401).json({ message: 'Incorrect password' });
-        }
+            const token = jwt.sign({ id: user._id, username: user.username }, "5739dc5e96c68d2200d196390a0dc53e73013a4ecc6fb144ff1368e570c0126d4afda02965f5d67975f2a01dc1bd9abb77a5284f230468a5ea24155aee8ae1d4", { expiresIn: '1h' });
 
-        const token = jwt.sign({ id: user._id, username: user.username }, "5739dc5e96c68d2200d196390a0dc53e73013a4ecc6fb144ff1368e570c0126d4afda02965f5d67975f2a01dc1bd9abb77a5284f230468a5ea24155aee8ae1d4", { expiresIn: '1h' });
+            const userData = {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                phoneNumber: user.phoneNumber
+            };
 
-        const userData = {
-            id: user._id,
-            username: user.username,
-            email: user.email,
-            phoneNumber: user.phoneNumber
-        };
-
-        res.status(200).json({ message: 'Login successful', token, user: userData });
+            res.status(200).json({ message: 'Login successful', token, user: userData });
+            //}
+            res.status(401).json({message: "Unauthorized to login"})
+        
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -195,4 +259,7 @@ module.exports = {
     verifyOtp,
     login,
     updatePassword,
+    patchBlock,
+    patchAlerts,
+    DeleteUser
 };
