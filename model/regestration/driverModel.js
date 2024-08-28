@@ -57,6 +57,14 @@ const driverSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
+    },
+    alerts: {
+        type: Number,
+        default: 0
+    },
+    block: {
+        type: Boolean,
+        default: true
     }
 });
 
