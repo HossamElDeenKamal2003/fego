@@ -233,7 +233,6 @@ const acceptTrip = async (req, res) => {
 };
 
 
-
 const cancelledTripbeforestart = async function(req,res){
     const {tripId} = req.body;
     try{
@@ -259,7 +258,7 @@ const cancelledTripbeforestart = async function(req,res){
 
 // Start a trip
 const startTrip = async (req, res) => {
-    const { tripId, driverId } = req.body;
+    const { tripId, driverId, userId } = req.body;
 
     try {
         // Validate input
@@ -286,7 +285,9 @@ const startTrip = async (req, res) => {
         }
 
         const updatedBooking = await booking.save();
-
+        if (global.io) {
+            global.io.emit('tripStarted', { updatedBooking, driverBook, userId });
+        }
         res.status(200).json({updatedBooking, driverBook});
     } catch (error) {
         console.log(error.message);
