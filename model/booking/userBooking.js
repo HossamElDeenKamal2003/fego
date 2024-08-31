@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+function dateHandle(){
+    const date = new Date();
+    const day = date.getDate();
+    const month = date.getMonth();
+    const year = date.getFullYear();
+    const finalDate = `${day}-${month}-${year}`;
+    return finalDate;
+}
+
 const bookingSchema = new mongoose.Schema({
     userId:{
         type: mongoose.Schema.Types.ObjectId,
@@ -66,8 +75,11 @@ const bookingSchema = new mongoose.Schema({
 
     cost:{
         type: Number,
+    },
+    date:{
+        type: String,
+        default: dateHandle()
     }
-
 });
 
 // Create a 2dsphere index on the pickupLocation field
