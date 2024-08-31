@@ -24,7 +24,7 @@ const router = express.Router();
 router.post('/findDrivers', findDrivers);
 router.post('/bookTrip', bookTrip);
 router.patch('/cost', calculateCost);
-router.get('/history', history);
+router.get('/history/:id', history);
 router.patch('/update-rate', driverRate);
 //router.patch('/updatelocation', updateLocation);
 router.patch('/updatestatus', updateStatus);

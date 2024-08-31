@@ -435,7 +435,7 @@ const updateStatus = async (req, res) => {
 };
 
 const history = async function(req, res){
-    const { userId } = req.body;
+    const userId = req.params.id;
     try {
         // Find all trips that are not pending and match the given userId
         const trips = await bookModel.find({ status: { $ne: "pending" }, userId: userId });
