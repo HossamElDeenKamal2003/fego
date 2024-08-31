@@ -452,6 +452,47 @@ const history = async function(req, res){
     }
 }
 
+const driverRate = async function(req, res) {
+    const { driverId, rate } = req.body;
+
+    try {
+        // Find the driver
+        const driver = await detailTrip.findById(driverId);
+        
+        if (!driver) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+
+        // Calculate the new average rating
+        const oldRate = driver.rate || 0;
+        const totalRatings = driver.totalRatings || 0;
+        const newTotalRatings = totalRatings + 1;
+        const newRate = ((oldRate * totalRatings) + rate) / newTotalRatings;
+
+        // Update the driver's rating and totalRatings
+        const updatedDriver = await detailTrip.findOneAndUpdate(
+            { _id: driverId },
+            { 
+                rate: newRate,
+                totalRatings: newTotalRatings
+            },
+            { new: true, useFindAndModify: false } // Return the updated document
+        );
+
+        res.status(200).json({ 
+            message: "Rate Updated Successfully", 
+            rate: updatedDriver.rate, 
+            totalRatings: updatedDriver.totalRatings 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
 // Calculate trip cost
 const cost = async (req, res) => {
     const { km, country } = req.body;
@@ -518,5 +559,6 @@ module.exports = {
     allTrips,
     getTripsSocket,
     arriving,
-    history
+    history,
+    driverRate
 };

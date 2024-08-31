@@ -65,6 +65,14 @@ const driverSchema = new mongoose.Schema({
     block: {
         type: Boolean,
         default: true
+    },
+    rate:{
+        type: Number,
+        default: 0,
+    },
+    totalRatings:{
+        type: Number,
+        default: 0,
     }
 });
 
