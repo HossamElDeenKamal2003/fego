@@ -3,9 +3,12 @@ const mongoose = require('mongoose');
 function dateHandle(){
     const date = new Date();
     const day = date.getDate();
-    const month = date.getMonth();
+    const month = date.getMonth() + 1;
     const year = date.getFullYear();
-    const finalDate = `${day}-${month}-${year}`;
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    const second = date.getSeconds();
+    const finalDate = `${day}-${month}-${year}  ${hour}:${minute}:${second}`;
     return finalDate;
 }
 
