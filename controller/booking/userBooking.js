@@ -416,8 +416,8 @@ const updateStatus = async (req, res) => {
         // Update booking status
         const updatedBooking = await bookModel.findByIdAndUpdate(
             tripId,
-            { status: status }, // Assuming there's a status field in your schema
-            { new: true } // Return the updated document
+            { status: status }, 
+            { new: true } 
         );
 
         if (!updatedBooking) {
@@ -430,6 +430,25 @@ const updateStatus = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+const history = async function(req, res){
+    const userId = req.params.id;
+    try{
+        const userfound = await bookModel.findOne({userId: userId});
+        if(!userfound){
+            res.status(400).json({message: "User Not Found"});
+        }
+        const history = await bookModel.find({userId: userId});
+        if(!history){
+            res.status(404).json({message: "Not Trips"});
+        }
+        res.status(200).json(history);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: error.message});
+    }
+}
 
 // Calculate trip cost
 const cost = async (req, res) => {
@@ -496,5 +515,6 @@ module.exports = {
     cancelledTripbeforestart,
     allTrips,
     getTripsSocket,
-    arriving
+    arriving,
+    history
 };

@@ -13,9 +13,7 @@ const addOffer = async function(req, res) {
         if (!tripId || !driverId) {
             return res.status(400).json({ message: 'tripId and driverId are required' });
         }
-
-        // Find the trip and driver details
-        const trip = await TripModel.findById(tripId); // Assuming TripModel is your trip model
+        const trip = await TripModel.findById(tripId); 
         const driver = await driverData.findById(driverId);
 
         if (!trip || !driver) {

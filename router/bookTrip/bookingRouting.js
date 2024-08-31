@@ -10,7 +10,8 @@ const {
     calculateCost,
     cancelledTripbeforestart,
     allTrips,
-    arriving
+    arriving,
+    history
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -22,6 +23,7 @@ const router = express.Router();
 router.post('/findDrivers', findDrivers);
 router.post('/bookTrip', bookTrip);
 router.patch('/cost', calculateCost);
+router.get('/history/:id', history)
 //router.patch('/updatelocation', updateLocation);
 router.patch('/updatestatus', updateStatus);
 router.patch('/accept-trip', acceptTrip);
