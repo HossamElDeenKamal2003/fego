@@ -66,10 +66,10 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
 }
 // Book a trip
 const bookTrip = async (req, res) => {
-    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType } = req.body;
+    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType, locationName } = req.body;
     try {
         // Validate input
-        if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined) {
+        if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined || !locationName) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
@@ -79,6 +79,7 @@ const bookTrip = async (req, res) => {
             distance: distance,
             pickupLocationName: pickupLocationName,
             time: time,
+            locationName: locationName,
             username: username,
             destination: destination,
             vehicleType: vehicleType,
@@ -99,6 +100,7 @@ const bookTrip = async (req, res) => {
             distance: distance,
             pickupLocationName: pickupLocationName,
             time: time,
+            locationName: locationName,
             username: username,
             destination: destination,
             vehicleType: vehicleType,

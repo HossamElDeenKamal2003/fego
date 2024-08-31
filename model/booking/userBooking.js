@@ -13,6 +13,10 @@ const bookingSchema = new mongoose.Schema({
     userId:{
         type: mongoose.Schema.Types.ObjectId,
     },
+    locationName:{
+        type: String,
+        required: true
+    },
     distance:{
         type: String,
         //required: true
