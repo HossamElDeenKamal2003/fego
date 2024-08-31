@@ -46,12 +46,10 @@ const addOffer = async function(req, res) {
 };
 const getOffer = async function(req, res) {
     const { tripId } = req.body;
-
     try {
         if (!tripId) {
             return res.status(400).json({ message: 'tripId is required' });
         }
-
         const offers = await offerModel.find({ tripId });
         res.status(200).json({ offers });
     } catch (error) {

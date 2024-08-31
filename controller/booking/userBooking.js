@@ -66,7 +66,7 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
 }
 // Book a trip
 const bookTrip = async (req, res) => {
-    const { id, distance, username, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType, locationName } = req.body;
+    const { id, distance, username, driverId, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType, locationName } = req.body;
     try {
         // Validate input
         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined || !locationName) {
@@ -77,6 +77,7 @@ const bookTrip = async (req, res) => {
         const newBooking = new bookModel({
             userId: id,
             distance: distance,
+            driverId,
             pickupLocationName: pickupLocationName,
             time: time,
             locationName: locationName,
@@ -98,6 +99,7 @@ const bookTrip = async (req, res) => {
         const pending = new pendingModel({
             userId: id,
             distance: distance,
+            driverId,
             pickupLocationName: pickupLocationName,
             time: time,
             locationName: locationName,
@@ -197,7 +199,7 @@ const acceptTrip = async (req, res) => {
         const booking = await bookModel.findOne({ _id: tripId });
         const userData = await user.findOne({ _id: userId });
         const driverLocation = await driverDestination.findOne({ driverId: driverId });
-
+        const driverData = await detailTrip.findOne({_id: driverId})
         if (!booking) {
             return res.status(404).json({ message: 'Trip not found' });
         }
@@ -208,9 +210,9 @@ const acceptTrip = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update the status to 'accepted'
+        // Update the booking status to 'accepted' and set the driverId
         booking.status = 'accepted';
-
+        booking.driverId = driverId;
         // Find and delete the trip from pendingModel
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
         if (!deletedPendingTrip) {
@@ -220,19 +222,18 @@ const acceptTrip = async (req, res) => {
         // Save the updated booking
         const updatedBooking = await booking.save();
 
-        // Send the tripAccepted event to both driverId and userId
+        // Emit the 'tripAccepted' event to both driverId and userId
         if (global.io) {
-            console.log(driverId, "===========", userId);
-            global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData })
             global.io.emit('tripAccepted', { updatedBooking, driverBook, driverLocation, userData });
         }
 
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 const cancelledTripbeforestart = async function(req,res){
@@ -434,21 +435,27 @@ const updateStatus = async (req, res) => {
 };
 
 const history = async function(req, res){
-    const userId = req.params.id;
-    try{
-        const userfound = await bookModel.findOne({userId: userId});
-        if(!userfound){
-            res.status(400).json({message: "User Not Found"});
+    const { userId } = req.body;
+    try {
+        // Find all trips that are not pending and match the given userId
+        const trips = await bookModel.find({ status: { $ne: "pending" }, userId: userId });
+        
+        // Fetch driver details for each trip
+        const tripsWithDriverDetails = await Promise.all(trips.map(async trip => {
+            const driverDetail = await detailTrip.findOne({ _id: trip.driverId });
+            return { ...trip.toObject(), driverDetail }; // Convert Mongoose document to plain object and include driverDetail
+        }));
+
+        // Emit trips with driver details to all WebSocket clients
+        if (global.io) {
+            global.io.emit('tripsUpdate', tripsWithDriverDetails);
         }
-        const history = await bookModel.find({userId: userId});
-        if(!history){
-            res.status(404).json({message: "Not Trips"});
-        }
-        res.status(200).json(history);
-    }
-    catch(error){
-        console.log(error);
-        res.status(500).json({message: error.message});
+
+        // Send response with trips to the client who made the HTTP request
+        res.status(200).json(tripsWithDriverDetails);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 }
 
@@ -476,7 +483,7 @@ const driverRate = async function(req, res) {
                 rate: newRate,
                 totalRatings: newTotalRatings
             },
-            { new: true, useFindAndModify: false } // Return the updated document
+            { new: true, useFindAndModify: false } 
         );
 
         res.status(200).json({ 
