@@ -548,6 +548,7 @@ const allTrips = async function(req, res, io) {
 
         // Emit trips to all WebSocket clients
         if(io) {
+            console.log("connected to accepted")
             io.emit('tripsUpdate', trips);
         }
 
