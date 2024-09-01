@@ -543,7 +543,7 @@ const getTripsSocket = (socketIoInstance) => {
 const allTrips = async function(req, res){
     try{
         // Fetch all trips
-        const trips = await bookModel.find();
+        const trips = await bookModel.filter(index=>index.status === "pending");
         
         // Emit trips to all WebSocket clients
         if(io) {
