@@ -46,7 +46,7 @@ const socketHandler = (io) => {
 
                 // Emit offerAdded event via WebSocket
                 if (io) {
-                    io.emit('offerAdded', { offer: formattedOffer, driver });
+                    io.emit(`offerAdded/${tripId}`, { offer: formattedOffer, driver });
                 }
 
             } catch (error) {
