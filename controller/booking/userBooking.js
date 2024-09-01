@@ -544,14 +544,12 @@ const getTripsSocket = (socketIoInstance) => {
 const allTrips = async function(req, res, io) {
     try {
         // Fetch all trips with status "pending"
-        const trips = await bookModel.find({ status: "pending" });
-
+        const trips = await bookModel.filter(index=>index.status === pending);
         // Emit trips to all WebSocket clients
         if(io) {
             console.log("connected to accepted")
             io.emit('tripsUpdate', trips);
         }
-
         // Send response with trips to the client who made the HTTP request
         res.status(200).json(trips);
     } catch(error) {
@@ -559,6 +557,21 @@ const allTrips = async function(req, res, io) {
         res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
+
+
+const getlocation = async function(req, res){
+    try{
+        const locations = await DestDriver.find();
+        if(!location){
+            res.status(404).json({message: "No Data"});
+        }
+        res.status(200).json(locations);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: error.message});
+    }
+}
 
 module.exports = allTrips;
 
@@ -577,5 +590,6 @@ module.exports = {
     getTripsSocket,
     arriving,
     history,
-    driverRate
+    driverRate,
+    getlocation
 };
