@@ -405,7 +405,6 @@ const endTrip = async (req, res) => {
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }
-
         res.status(200).json({updatedBooking, driverBook});
     } catch (error) {
         console.log(error.message);
@@ -543,20 +542,23 @@ const getTripsSocket = (socketIoInstance) => {
 
 const allTrips = async function(req, res, io) {
     try {
-        // Fetch all trips with status "pending"
-        const trips = await bookModel.filter(index=>index.status === pending);
+        // Fetch all trips with status "pending" from the database
+        const trips = await bookModel.find({ status: 'pending' });
+
         // Emit trips to all WebSocket clients
-        if(io) {
-            console.log("connected to accepted")
+        if (io) {
+            console.log("Emitting trips with status 'pending'");
             io.emit('tripsUpdate', trips);
         }
+
         // Send response with trips to the client who made the HTTP request
         res.status(200).json(trips);
-    } catch(error) {
+    } catch (error) {
         console.error('Error fetching trips:', error);
         res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
+
 
 
 const getlocation = async function(req, res){

@@ -240,20 +240,22 @@ const DeleteUser = async function(req, res) {
     }
 }
 
-const driverLocation = async function(req, res){
-    const userId = req.params.id;
-    try{
-        const driverLocation = await driverFind.findOne();
-        // if(!driverLocation){
-        //     res.status(404).json({message: "Driver Not Found"});
-        // }
-        res.status(200).json(driverLocation);
+const driverLocation = async (req, res) => {
+    try {
+        // Assuming `driverFind` is a model for the driver's location.
+        const location = await driverFind.findOne();
+        
+        if (!location) {
+            return res.status(404).json({ message: 'Driver location not found' });
+        }
+        
+        res.status(200).json(location);
+    } catch (error) {
+        console.error('Error fetching driver location:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
-    catch(error){
-        console.log(error);
-        res.status(500).json(error.message);
-    }
-}
+};
+
 module.exports = {
     signup,
     login,
