@@ -224,7 +224,7 @@ const acceptTrip = async (req, res) => {
 
         // Emit the 'tripAccepted' event to both driverId and userId
         if (global.io) {
-            global.io.emit(`tripAccepted/${tripId}`, { updatedBooking, driverBook, driverLocation, userData });
+            global.io.emit(`tripAccepted/${driverId}`, { updatedBooking, driverBook, driverLocation, userData });
         }
 
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
