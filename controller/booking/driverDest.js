@@ -32,7 +32,7 @@ const locationHandler = (io) => {
                     return;
                 }
 
-                io.emit('location-updated', {
+                io.emit(`location-updated/${driverId}`, {
                     driverId,
                     location: result.location
                 });
