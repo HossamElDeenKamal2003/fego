@@ -246,7 +246,9 @@ const cancelledTripbeforestart = async function(req,res){
         booking.status = 'cancelled';
         const updatedBooking = await booking.save();
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-
+        if (global.io) {
+            global.io.emit('tripcancellBefore', { updatedBooking, driverBook, userId });
+        }
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }
@@ -364,7 +366,9 @@ const canceledTrip = async (req, res) => {
         }
 
         const updatedBooking = await booking.save();
-
+        if (global.io) {
+            global.io.emit('tripCancell', { updatedBooking, driverBook, userId });
+        }
         res.status(200).json({updatedBooking, driverBook});
     } catch (error) {
         console.log(error.message);
@@ -395,7 +399,9 @@ const endTrip = async (req, res) => {
         booking.status = 'end';
         const updatedBooking = await booking.save();
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-
+        if (global.io) {
+            global.io.emit('tripEnd', { updatedBooking, driverBook, userId });
+        }
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }

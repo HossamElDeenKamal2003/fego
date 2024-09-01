@@ -240,11 +240,26 @@ const DeleteUser = async function(req, res) {
     }
 }
 
+const driverLocation = async function(req, res){
+    const userId = req.params.id;
+    try{
+        const driverLocation = await driverFind.findOne();
+        // if(!driverLocation){
+        //     res.status(404).json({message: "Driver Not Found"});
+        // }
+        res.status(200).json(driverLocation);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json(error.message);
+    }
+}
 module.exports = {
     signup,
     login,
     updatePassword,
     patchBlock,
     DeleteUser,
-    patchAlerts
+    patchAlerts,
+    driverLocation
 };
