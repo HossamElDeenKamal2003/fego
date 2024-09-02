@@ -3,6 +3,60 @@
     const driverDest = require('../../model/booking/driversDestination');
     const tripsModel = require('../../model/booking/userBooking');
     const distance = require('../../model/booking/maxDistance');
+    const properities = require('../../model/booking/tripProperity');
+
+    const updateProperity = async function(req, res) {
+        const { time, distance } = req.body;
+        try {
+            const properity = await properities.findOne(); // Get the first document
+            
+            if (!properity) {
+                return res.status(404).json({ message: "Properities not found" });
+            }
+    
+            properity.time = time;
+            properity.distance = distance;
+    
+            await properity.save();
+    
+            res.status(200).json({ message: "Updated Properities Successfully", properity });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: error.message });
+        }
+    };
+
+    const getProperity = async function(req, res){
+        try{
+            const properity = await properities.findOne();
+            if(!properity){
+                res.status(404).json({ message: "No Properity for Trip"});
+            }
+            res.status(200).json(properity);
+        }
+        catch(error){
+            console.log(error);
+            res.status(500).json({ message: error.message});
+        }
+    }
+
+    const addProperites = async function(req, res) {
+        try {
+            const newProp = new properities({
+                time: 10, // You can use values from req.body if needed
+                distance: 50
+            });
+            
+            await newProp.save();
+    
+            // Send a success response
+            res.status(201).json({ message: "Properities added successfully", newProp });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: error.message });
+        }
+    };
+
     // get all users
     const getAllUsers = async function(req,res){
         try{
@@ -127,5 +181,8 @@
         getDriverlocation,
         trips,
         distacne,
-        alert
+        alert,
+        getProperity,
+        updateProperity,
+        addProperites
     }

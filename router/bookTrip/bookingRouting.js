@@ -5,7 +5,7 @@ const {
     updateStatus,
     acceptTrip,
     startTrip,
-    canceledTrip, // Correct function name
+    canceledTrip,
     endTrip,
     calculateCost,
     cancelledTripbeforestart,
@@ -37,5 +37,6 @@ router.patch('/cancelled_before_start', cancelledTripbeforestart);
 router.put('/add-offer', addOffer);
 router.put('/get-offer', getOffer);
 router.get('/get-trips', allTrips);
+
 
 module.exports = router;
