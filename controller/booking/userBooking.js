@@ -400,7 +400,7 @@ const endTrip = async (req, res) => {
         const updatedBooking = await booking.save();
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
         if (global.io) {
-            global.io.emit(`tripEnd/${tripId}`, { updatedBooking, driverBook, userId });
+            global.io.emit(`tripEnd/${tripId}`, { updatedBooking, driverBook });
         }
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
