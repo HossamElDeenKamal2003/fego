@@ -47,6 +47,7 @@ const signup = async function(req, res) {
             profile_image,
             username,
             phoneNumber,
+            driverFCMToken,
             email,
             id,
             carNumber,
@@ -64,6 +65,7 @@ const signup = async function(req, res) {
         const driverLocation = new driverFind({
             driverId: newDriver._id,
             profile_image: newDriver.profile_image,
+            driverFCMToken,
             username: newDriver.username,
             carModel: newDriver.carModel,
             carNumber: newDriver.carNumber,
@@ -110,7 +112,7 @@ const signup = async function(req, res) {
 const login = async function(req, res) {
     const { email, phoneNumber, password } = req.body;
 
-    if ((!email && !phoneNumber) || !password) {
+    if ((!email && !phoneNumber) || !password ) {
         return res.status(400).json({ message: 'Email or phone number and password are required' });
     }
 
@@ -256,6 +258,28 @@ const driverLocation = async (req, res) => {
     }
 };
 
+const handleToken = async function(req, res) {
+    const id = req.params.id;
+    const { driverFCMToken } = req.body;
+
+    try {
+        const found = await driverFind.findByIdAndUpdate(
+            id, // Directly use id here
+            { $set: { driverFCMToken: driverFCMToken } },
+            { new: true }
+        );
+        
+        if (!found) {
+            return res.status(404).json({ message: "Driver not found" });
+        }
+
+        res.status(200).json({ message: "Token sent successfully", driverFCMToken });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -263,5 +287,6 @@ module.exports = {
     patchBlock,
     DeleteUser,
     patchAlerts,
-    driverLocation
+    driverLocation,
+    handleToken
 };

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
-const bookModel = require('../../model/booking/userBooking');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
 const pendingModel = require('../../model/booking/pendingTrips.js')
 const booking = require('../../model/booking/userBooking.js');
+const bookModel = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
 const user = require('../../model/regestration/userModel.js');
 const http = require('http');
@@ -11,62 +11,111 @@ const server = http.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
 const Distance = require('../../model/booking/maxDistance.js');
+const offers = require('../../model/booking/offers.js');
+const PricesModel = require('../../model/booking/prices.js');
+const sendNotification = require('../../firebase.js'); // Import the sendNotification function
+
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
-    // Validate input
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
     }
 
     try {
         const settings = await Distance.findOne({});
-        const maxDistance = settings ? settings.maxDistance : 5000; 
-        // First, check for drivers with the matching vehicle type
-        const vehicles = await driverDestination.find({ vehicleType });
-        
-        if (vehicles.length === 0) {
-            throw new Error('No vehicles match your choice');
-        }
+        const maxDistance = settings ? settings.maxDistance : 5000; // Default to 5km if not set
 
-        // Now, find nearby drivers based on location and vehicle type
-        const drivers = await driverDestination.find({
-            vehicleType,
-            location: {
-                $near: {
-                    $geometry: {
+        // Use the MongoDB aggregation pipeline to calculate distance between client and drivers
+        const drivers = await driverDestination.aggregate([
+            {
+                $geoNear: {
+                    near: {
                         type: "Point",
                         coordinates: [longitude, latitude]
                     },
-                    $maxDistance: maxDistance // Use the dynamic maxDistance from settings
+                    distanceField: "distance", // This will return the calculated distance in meters
+                    spherical: true,
+                    maxDistance: maxDistance,
+                    query: { vehicleType } // Filter by vehicle type
                 }
             }
-        });
+        ]);
 
         if (drivers.length === 0) {
             throw new Error('No drivers available in your area');
         }
 
-        // Find detailed information for each nearby driver
+        // Find detailed information for each nearby driver and include the distance
         const driverDetails = await Promise.all(
             drivers.map(async (driver) => {
                 const detail = await detailTrip.findOne({ _id: driver.driverId });
                 return {
-                    ...driver.toObject(),
-                    ...detail?.toObject() // Use optional chaining to avoid errors if detail is not found
+                    ...driver,
+                    ...detail?.toObject(), // Include additional driver details
+                    distance: driver.distance // Include calculated distance
                 };
             })
         );
 
-        // Send the response directly from the findDrivers function
         return driverDetails;
+
     } catch (error) {
         console.error('Error finding drivers:', error);
         throw error;
     }
+};
+
+
+const updateDistance = async function(req, res) {
+    const { maxDistance } = req.body;
+
+    try {
+        // Ensure maxDistance is provided
+        if (!maxDistance) {
+            return res.status(400).json({ message: "maxDistance is required" });
+        }
+
+        // Update the document by its _id
+        const result = await Distance.findOneAndUpdate(
+            { _id: "66cc4dd383ebb7ad1147a518" },  // Ensure this ID is correct
+            { maxDistance: maxDistance },
+            { new: true }  // Return the updated document
+        );
+
+        // Check if the update was successful
+        if (!result) {
+            return res.status(404).json({ message: "Distance data not found" });
+        }
+
+        // Send the updated document in the response
+        res.status(200).json({ message: "Distance updated successfully", result });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const getDistance = async function(req, res){
+    try{
+        const distance = await Distance.findOne({});
+        if(!distance){
+            res.status(404).json({message: "No Data For Distance"});
+        }
+        res.status(200).json({message: distance});
+    }
+    catch(error){
+        console.log(error);
+    }
 }
+
 // Book a trip
 const bookTrip = async (req, res) => {
-    const { id, distance, username, driverId, destination, latitude, longitude, destlatitude, destlongtitude, cost,pickupLocationName,time, vehicleType, locationName } = req.body;
+    const {
+        id, distance, username, driverId, destination, latitude, longitude,
+        destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
+        locationName, uniqueId
+    } = req.body;
+
     try {
         // Validate input
         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined || !locationName) {
@@ -78,6 +127,7 @@ const bookTrip = async (req, res) => {
             userId: id,
             distance: distance,
             driverId,
+            uniqueId,
             pickupLocationName: pickupLocationName,
             time: time,
             locationName: locationName,
@@ -86,20 +136,24 @@ const bookTrip = async (req, res) => {
             vehicleType: vehicleType,
             pickupLocation: {
                 type: "Point",
-                coordinates: [longitude, latitude]
+                coordinates: [longitude, latitude] 
             },
-            destinationLocation:{
+            destinationLocation: {
                 type: "Point",
                 coordinates: [destlongtitude, destlatitude]
             },
             cost: cost,
             status: 'pending' // Initial status
         });
+
         const savedBooking = await newBooking.save();
+
+        // Save in pending model
         const pending = new pendingModel({
             userId: id,
             distance: distance,
             driverId,
+            uniqueId,
             pickupLocationName: pickupLocationName,
             time: time,
             locationName: locationName,
@@ -110,56 +164,61 @@ const bookTrip = async (req, res) => {
                 type: "Point",
                 coordinates: [longitude, latitude]
             },
-            destinationLocation:{
+            destinationLocation: {
                 type: "Point",
                 coordinates: [destlongtitude, destlatitude]
             },
             cost: cost,
-            status: 'pending' // Initial status
-        })
-        await pending.save();
-        // Find available drivers
-        const availableDrivers = await driverDestination.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: "Point",
-                        coordinates: [longitude, latitude]
-                    },
-                    $maxDistance: 5000 // Distance in meters, 5km = 5000m
-                }
-            }
+            status: 'pending'
         });
-        
-        // Debugging: Log available drivers
+        await pending.save();
+
+        // Find drivers using the findDrivers function
+        const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
+
+        if (availableDrivers.length === 0) {
+            return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
+        }
+
+        // Debugging: Log available drivers and their details
         console.log('Available Drivers:', availableDrivers);
 
-        // if (availableDrivers.length === 0) {
-        //     // If no drivers available, update booking status to 'no drivers available'
-        //     savedBooking.status = 'no drivers available';
-        //     await savedBooking.save();
-        //     return res.status(404).json({ message: 'No drivers available here' });
-        // }
+        // Send notification to all available drivers
+        for (const driver of availableDrivers) {
+            // Check if the driver has an FCM token saved in the database
+            const driverFCMToken = 'dJArw3O4TT-OyIw31zjbUV:APA91bE6UeJzoKRLAIU-ONh12KK82Lvy128k37sh0W6aZl_cNdV1B6cCySTGjO_NXdbdONAeCmJ9SFwpiGC7oPDVj4tyBHEToVUcsFiEgdgN0U-L3xpgDZ4em5iP4UA84xxQwzCx3KvN' // Assuming drivers have an 'fcmToken' field
 
-        // // Assign the first available driver to the booking
-        // const selectedDriver = availableDrivers[0];
-        // savedBooking.driver = selectedDriver._id;
-        // savedBooking.username = selectorFriver.username;
-        // savedBooking.carModel = selectedDriver.carModel; // Uncomment if these fields exist
-        // savedBooking.vehicleType = selectedDriver.vehicleType;
-        // savedBooking.phoneNumber = selectedDriver.phoneNumber;
+            if (driverFCMToken) {
+                const notificationMessage = {
+                    title: 'New Trip Available',
+                    body: `A new trip to ${destination} is available for you.`,
+                };
+
+                // Send the FCM notification to the driver
+                sendNotification(driverFCMToken, notificationMessage);
+            } else {
+                console.log(`Driver ${driver.username} does not have an FCM token.`);
+            }
+        }
 
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
 
-        // Return the updated booking
-        return res.status(200).json(updatedBooking);
+        // Return the updated booking and available drivers
+        return res.status(200).json({
+            booking: updatedBooking,
+            availableDrivers
+        });
+
     } catch (error) {
         console.log(error); // Log the full error
         return res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
+
+
+
 
 const calculateCost = async function(req, res) {
     const { tripId, cost } = req.body;
@@ -186,11 +245,11 @@ const calculateCost = async function(req, res) {
 //Accept a trip
 
 const acceptTrip = async (req, res) => {
-    const { tripId, driverId, userId } = req.body;
+    const { tripId, driverId, userId, offerId } = req.body;
 
     try {
         // Validate input
-        if (!tripId || !driverId || !userId) {
+        if (!tripId || !driverId || !userId || !offerId) {
             return res.status(400).json({ message: 'Data required' });
         }
 
@@ -209,9 +268,9 @@ const acceptTrip = async (req, res) => {
         if (!userData) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        // Update the booking status to 'accepted' and set the driverId
+        const offer = await offers.findOne({_id: offerId});
         booking.status = 'accepted';
+        booking.cost = offer.offer || booking.cost;
         booking.driverId = driverId;
         // Find and delete the trip from pendingModel
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
@@ -236,30 +295,44 @@ const acceptTrip = async (req, res) => {
 
 
 
-const cancelledTripbeforestart = async function(req,res){
-    const {tripId} = req.body;
-    try{
-        if(!tripId){
-            res.status(400).json({message: 'trip id is required'})
-        }
-        const booking = await bookModel.findOne({ _id: tripId});
-        booking.status = 'cancelled';
-        const updatedBooking = await booking.save();
-        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-        if (global.io) {
-            global.io.emit(`tripcancellBefore/${tripId}`, { updatedBooking, driverBook, userId });
-        }
-        if (!deletedPendingTrip) {
-            console.warn(`Trip ${tripId} not found in pendingModel`);
+const cancelledTripbeforestart = async function(req, res) {
+    const { tripId } = req.body;
+    
+    try {
+        if (!tripId) {
+            return res.status(400).json({ message: 'Trip ID is required' });
         }
 
-        res.status(200).json({updatedBooking});
-    }
-    catch(error){
+        // Find and update the booking
+        const booking = await bookModel.findOneAndUpdate({ _id: tripId },  { status: 'cancelled' }, { new: true });
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        //booking.status = 'cancelled';
+        //const updatedBooking = await booking.save();
+
+        // Delete from pending model
+        // const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+        // if (!deletedPendingTrip) {
+        //     console.warn(`Trip ${tripId} not found in pendingModel`);
+        // }
+
+        // Emit cancellation event
+        if (global.io) {
+            // Ensure driverBook and userId are defined or passed correctly
+            global.io.emit(`tripcancellBefore/${tripId}`, { booking }); // Assuming driverBook and userId should be included if defined
+        }
+
+        // Respond with updated booking
+        res.status(200).json({ booking });
+    } catch (error) {
         console.log(error);
-        res.status(500).json({message: error.message});
+        res.status(500).json({ message: 'Internal Server Error' });
     }
-}
+};
+
 
 // Start a trip
 const startTrip = async (req, res) => {
@@ -464,6 +537,46 @@ const history = async function(req, res){
     }
 }
 
+const driverHistory = async function(req, res) {
+    const driverId = req.params.id;
+    try {
+        // Fetch driver trips
+        const driverTrips = await booking.find({ driverId: driverId });
+
+        // Check if trips were found
+        if (!driverTrips || driverTrips.length === 0) {
+            return res.status(404).json({ message: "No Trips" });
+        }
+
+        // Extract user IDs from the driverTrips
+        const userIds = driverTrips.map(trip => trip.userId);
+
+        // Fetch user data for all unique user IDs
+        const uniqueUserIds = Array.from(new Set(userIds));
+        const userData = await user.find({ _id: { $in: uniqueUserIds } });
+
+        // Create a map of user data for quick lookup
+        const userMap = userData.reduce((map, user) => {
+            map[user._id] = user;
+            return map;
+        }, {});
+
+        // Attach user data to each trip
+        const tripsWithUserData = driverTrips.map(trip => ({
+            ...trip.toObject(),
+            userData: userMap[trip.userId] || null
+        }));
+
+        // Respond with trips and user data
+        res.status(200).json({ tripsWithUserData });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
+
 const driverRate = async function(req, res) {
     const { driverId, rate } = req.body;
 
@@ -502,14 +615,95 @@ const driverRate = async function(req, res) {
     }
 };
 
+const addPrice = async function(req, res) {
+    const { country, priceCar, motorocycle, priceVan } = req.body;
+    
+    try {
+        // Check for missing fields
+        if (!country || !priceCar || !motorocycle || !priceVan) {
+            return res.status(400).json({ message: "All Fields Required" });
+        }
 
+        const newPrice = new PricesModel({
+            country,
+            priceCar,
+            motorocycle,
+            priceVan,
+        });
 
+        await newPrice.save();
+        res.status(201).json({ message: "Price Added Successfully", newPrice });
+    } catch (error) {
+        console.error(error); // Use console.error for errors
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getPrice = async function(req, res){
+    try{
+        const prices = await PricesModel.find();
+        res.status(200).json(prices);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({message: error.message});
+    }
+}
+
+const updatePrice = async function(req, res) {
+    const { country, priceCar, motorocycle, priceVan } = req.body;
+    
+    try {
+        if (!country) {
+            return res.status(400).json({ message: "Country not found" });
+        }
+
+        const updatedPrice = await PricesModel.findOneAndUpdate(
+            { country: country },
+            { priceCar, motorocycle, priceVan },
+            { new: true }
+        );
+
+        if (!updatedPrice) {
+            return res.status(404).json({ message: "Pricing data not found" });
+        }
+
+        res.status(200).json({ message: "Pricing Updated Successfully", updatedPrice });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const deletePrice = async function(req, res) {
+    const { country } = req.body;
+    try {
+        // Ensure the country field is provided
+        if (!country) {
+            return res.status(400).json({ message: "Country is required" });
+        }
+
+        // Attempt to delete the document
+        const result = await PricesModel.findOneAndDelete({ country: country });
+
+        // Check if a document was deleted
+        if (!result) {
+            return res.status(404).json({ message: "Pricing data not found" });
+        }
+
+        res.status(200).json({ message: "Price Deleted Successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 // Calculate trip cost
 const cost = async (req, res) => {
     const { km, country } = req.body;
     try {
         // Define cost rates per kilometer for each country
+
         const rates = {
             egypt: 15,     
             american: 2.0, 
@@ -530,6 +724,39 @@ const cost = async (req, res) => {
         res.status(200).json({ cost: cost.toFixed(2) }); // Return cost rounded to 2 decimal places
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const updateCost = async function(req, res) {
+    const { tripId, cost } = req.body;
+
+    try {
+        // Validate input
+        if (!tripId || !cost) {
+            return res.status(400).json({ message: "All Data Required" });
+        }
+
+        // Update the trip's cost
+        const trip = await bookModel.findOneAndUpdate(
+            { _id: tripId },
+            { cost: cost },
+            { new: true } // To return the updated document
+        );
+
+        if (!trip) {
+            return res.status(404).json({ message: "Trip not found" });
+        }
+
+        // Emit event to update cost in real-time
+        if (global.io) {
+            global.io.emit('trip-updated', trip);
+        }
+
+        // Respond with success message and the updated trip
+        res.status(200).json({ message: "Cost Updated Successfully", trip });
+    } catch (error) {
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -564,7 +791,7 @@ const allTrips = async function(req, res, io) {
 const getlocation = async function(req, res){
     try{
         const locations = await DestDriver.find();
-        if(!location){
+        if(!locations){
             res.status(404).json({message: "No Data"});
         }
         res.status(200).json(locations);
@@ -574,6 +801,45 @@ const getlocation = async function(req, res){
         res.status(500).json({message: error.message});
     }
 }
+
+const costHandler = (io) => {
+    io.on("connection", (socket) => {
+        console.log("Connected To Update Cost");
+
+        socket.on("update-price", async (data) => {
+            const { tripId, cost } = data; // Extract tripId and cost from the received data
+
+            if (!tripId || typeof cost !== 'number') {
+                socket.emit('error', { message: 'tripId and valid cost are required' });
+                return;
+            }
+
+            try {    
+                const trip = await bookModel.findOneAndUpdate(
+                    { _id: tripId },
+                    { cost: cost },
+                    { new: true }
+                );
+
+                if (!trip) {
+                    socket.emit('error', { message: 'Trip not found' });
+                    return;
+                }
+
+                // Emit the updated cost to all connected clients
+                io.emit(`get-cost/${tripId}`, {
+                    cost: trip.cost
+                });
+            } catch (error) {
+                console.log('Error updating cost:', error);
+                socket.emit('error', { message: 'Error when updating price' });
+            }
+        });
+    });
+};
+
+module.exports = costHandler;
+
 
 module.exports = allTrips;
 
@@ -593,5 +859,14 @@ module.exports = {
     arriving,
     history,
     driverRate,
-    getlocation
+    getlocation,
+    costHandler,
+    updateCost,
+    driverHistory,
+    addPrice,
+    updatePrice,
+    getPrice,
+    deletePrice,
+    updateDistance,
+    getDistance
 };

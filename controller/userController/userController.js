@@ -57,6 +57,7 @@ const signUp = async (req, res) => {
             profile_image: profile_image_url, // Save the Cloudinary URL
             email,
             phoneNumber,
+            userFCMToken,
             block: true,
             alerts: 0,
             password: bcrypt.hashSync(req.body.password, 10)
@@ -89,6 +90,7 @@ const signUp = async (req, res) => {
             email: newUser.email,
             block: newUser.block,
             alerts: newUser.alerts,
+            userFCMToken,
             phoneNumber: newUser.phoneNumber
         };
 
@@ -254,6 +256,28 @@ const updatePassword = async (req, res) => {
     }
 };
 
+const handleToken = async function(req, res) {
+    const id = req.params.id;
+    const { userFCMToken } = req.body;
+
+    try {
+        const found = await User.findByIdAndUpdate(
+            id, // Directly use id here
+            { $set: { driverFCMToken: userFCMToken } },
+            { new: true }
+        );
+        
+        if (!found) {
+            return res.status(404).json({ message: "Driver not found" });
+        }
+
+        res.status(200).json({ message: "Token sent successfully", driverFCMToken });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     signUp,
     verifyOtp,
@@ -261,5 +285,6 @@ module.exports = {
     updatePassword,
     patchBlock,
     patchAlerts,
-    DeleteUser
+    DeleteUser,
+    handleToken
 };

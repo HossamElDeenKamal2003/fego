@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Location Updates</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+    .driver-info {
+        margin-bottom: 20px;
+    }
+    .error {
+        color: red;
+    }
+    .success {
+        color: green;
+    }
+/* Your existing CSS with some tweaks for Vue's scoped styling */
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.img{
+  color: rgb(114, 89, 170);
+}
+body {
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+  background: #ffffff;
+}
+
+input,
+button {
+  border: none;
+  outline: none;
+  background: none;
+  font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+}
+
+.cont {
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  width: 900px;
+  height: 550px;
+  margin: 0 auto 100px;
+  background: #fff;
+  box-shadow: -10px -10px 15px rgba(255, 255, 255, 0.3), 10px 10px 15px rgba(70, 70, 70, 0.15),
+    inset -10px -10px 15px rgba(255, 255, 255, 0.3), inset 10px 10px 15px rgba(70, 70, 70, 0.15);
+}
+
+.form {
+  position: relative;
+  width: 640px;
+  height: 100%;
+  transition: transform 1.2s ease-in-out;
+  padding: 50px 30px 0;
+}
+
+.sub-cont {
+  overflow: hidden;
+  position: absolute;
+  left: 640px;
+  top: 0;
+  width: 900px;
+  height: 100%;
+  padding-left: 260px;
+  background: rgb(114, 89, 170);
+  transition: transform 1.2s ease-in-out;
+}
+
+.cont.s--signup .sub-cont {
+  transform: translate3d(-640px, 0, 0);
+}
+
+button {
+  display: block;
+  margin: 0 auto;
+  width: 260px;
+  height: 36px;
+  border-radius: 30px;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  background: #d4af7a;
+  text-transform: uppercase;
+}
+
+.img {
+  overflow: hidden;
+  z-index: 2;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 260px;
+  height: 100%;
+  padding-top: 360px;
+}
+
+.img:before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 900px;
+  height: 100%;
+  opacity: 0.8;
+  background-size: cover;
+  transition: transform 1.2s ease-in-out;
+}
+
+.img:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.cont.s--signup .img:before {
+  transform: translate3d(640px, 0, 0);
+}
+
+.img__text {
+  z-index: 2;
+  position: absolute;
+  left: 0;
+  top: 50px;
+  width: 100%;
+  padding: 0 20px;
+  text-align: center;
+  color: #fff;
+  transition: transform 1.2s ease-in-out;
+}
+
+.cont.s--signup .img__text.m--up {
+  transform: translateX(520px);
+}
+
+.img__text.m--in {
+  transform: translateX(-520px);
+}
+
+.cont.s--signup .img__text.m--in {
+  transform: translateX(0);
+}
+
+.img__btn {
+  overflow: hidden;
+  z-index: 2;
+  position: relative;
+  width: 100px;
+  height: 36px;
+  margin: 0 auto;
+  background: transparent;
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.img__btn:after {
+  content: '';
+  z-index: 2;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid #fff;
+  border-radius: 30px;
+}
+
+.img__btn span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: transform 1.2s;
+}
+
+.img__btn span.m--in {
+  transform: translateY(-72px);
+}
+
+.cont.s--signup .img__btn span.m--in {
+  transform: translateY(0);
+}
+
+.cont.s--signup .img__btn span.m--up {
+  transform: translateY(72px);
+}
+
+h2 {
+  width: 100%;
+  font-size: 26px;
+  text-align: center;
+}
+
+label {
+  display: block;
+  width: 260px;
+  margin: 25px auto 0;
+  text-align: center;
+}
+
+label span {
+  font-size: 12px;
+  color: #cfcfcf;
+  text-transform: uppercase;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding-bottom: 5px;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.forgot-pass {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 12px;
+  color: #cfcfcf;
+}
+
+    </style>
+</head>
+<body>
+    <div class="cont <%= isSignUp ? 's--signup' : '' %>">
+        <div class="form sign-in">
+        <h2>Welcome</h2>
+        <label>
+        <span>Username</span>
+        <input type="email" name="username" id="signInUsername" />
+        </label>
+        <label>
+        <span>Password</span>
+        <input type="password" name="password" id="signInPassword" />
+        </label>
+        <!-- <p class="forgot-pass">Forgot password?</p> -->
+        <button type="button" class="submit" onclick="signIn()">Sign In</button>
+    </div>
+    <div class="sub-cont">
+        <div class="img">
+        <div class="img__text m--up">
+            <h3>Don't have an account? Please Sign up!</h3>
+        </div>
+        <div class="img__text m--in">
+            <h3>If you already have an account, just sign in.</h3>
+        </div>
+        <div class="img__btn" onclick="toggleSignUp()">
+            <span class="m--up">Sign Up</span>
+            <span class="m--in">Sign In</span>
+        </div>
+        </div>
+        <div class="form sign-up">
+        <h2>Create your Account</h2>
+        <label>
+            <span>Name</span>
+            <input type="text" name="username" id="signUpUsername" />
+        </label>
+        <label>
+            <span>Secret Key</span>
+            <input type="email" name="secretKey" id="signUpSecretKey" />
+        </label>
+        <label>
+            <span>Password</span>
+            <input type="password" name="password" id="signUpPassword" />
+        </label>
+        <button type="button" class="submit" onclick="signUp()">
+            Sign Up
+        </button>
+        </div>
+    </div>
+    </div>
+
+    <!-- <script>
+        const driversContainer = document.getElementById('drivers-container');
+        const statusElement = document.getElementById('connection-status');
+        
+        // Replace with your WebSocket server URL
+        const serverUrl = 'http://localhost:3000'; // Adjust this if needed
+
+        const socket = io(serverUrl); // Connect to the WebSocket server
+
+        // Function to update or create driver info
+        function updateDriverLocation(driverId, location) {
+            let driverElement = document.getElementById(`driver-${driverId}`);
+
+            if (!driverElement) {
+                // Create a new element if it doesn't exist
+                driverElement = document.createElement('div');
+                driverElement.id = `driver-${driverId}`;
+                driverElement.className = 'driver-info';
+                driversContainer.appendChild(driverElement);
+            }
+
+            // Update the driver's location
+            driverElement.innerHTML = `
+                <h2>Driver ID: ${driverId}</h2>
+                <p>Longitude: ${location.coordinates[0]}</p>
+                <p>Latitude: ${location.coordinates[1]}</p>
+            `;
+        }
+
+        // Function to fetch drivers and set up listeners
+        function getDriversAndListen() {
+            axios.get(`${serverUrl}/admin/get-drivers`)
+                .then(response => {
+                    const drivers = response.data; // Assuming response.data is an array of driver objects
+                    console.log('Fetched drivers:', drivers);
+
+                    // Set up listeners for each driver
+                    drivers.forEach(driver => {
+                        const driverId = driver._id; // Use the _id field from the driver data
+                        console.log(`Setting up listener for driver ID: ${driverId}`);
+
+                        // Listen for location updates for each driver
+                        socket.on(`location-updated/${driverId}`, (data) => {
+                            console.log(`Received location update for driver ${driverId}:`, data);
+                            updateDriverLocation(data.driverId, data.location);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching drivers:', error);
+                });
+        }
+
+        // Initialize WebSocket connection and fetch drivers on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Connecting to WebSocket server');
+            
+            // Listen for connection events
+            socket.on('connect', () => {
+                console.log('WebSocket connected');
+                statusElement.textContent = 'Connected to WebSocket server';
+                statusElement.classList.remove('error');
+                statusElement.classList.add('success');
+                getDriversAndListen();
+            });
+
+            // Listen for disconnection events
+            socket.on('disconnect', () => {
+                console.log('WebSocket disconnected');
+                statusElement.textContent = 'Disconnected from WebSocket server';
+                statusElement.classList.remove('success');
+                statusElement.classList.add('error');
+            });
+
+            // Handle reconnections
+            socket.on('reconnect', () => {
+                console.log('WebSocket reconnected');
+                statusElement.textContent = 'Reconnected to WebSocket server';
+                statusElement.classList.remove('error');
+                statusElement.classList.add('success');
+            });
+        });
+    </script> -->
+    <script>
+    let isSignUp = false;
+
+    function toggleSignUp() {
+        isSignUp = !isSignUp;
+        document.querySelector(".cont").classList.toggle("s--signup", isSignUp);
+    }
+
+    function signIn() {
+        const signInForm = {
+          username: document.getElementById("signInUsername").value,
+          password: document.getElementById("signInPassword").value,
+        };
+
+        fetch("/admin/signin", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signInForm),
+        }).then(response=>{
+          console.log(response.data);
+        })
+    }
+
+    function signUp() {
+        const signUpForm = {
+        username: document.getElementById("signUpUsername").value,
+        secretKey: document.getElementById("signUpSecretKey").value,
+        password: document.getElementById("signUpPassword").value,
+        };
+
+        fetch("/admin/signup", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signUpForm),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            alert("Admin created successfully");
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            alert(error.message);
+        });
+    }
+    </script>
+</body>
+</html>

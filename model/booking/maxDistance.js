@@ -4,7 +4,7 @@ const distanceSchema = new mongoose.Schema({
     maxDistance: {
         type: Number,
         required: true,
-        default: 5000 // Default to 5km
+        default: 5000 
     }
 });
 

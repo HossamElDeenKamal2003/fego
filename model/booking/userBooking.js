@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 function dateHandle(){
-    const date = new Date();
+    const date = new Date(new Date().toLocaleString("en-US", { timeZone: 'Africa/Cairo' }));
+
     const day = date.getDate();
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
@@ -13,19 +14,22 @@ function dateHandle(){
 }
 
 const bookingSchema = new mongoose.Schema({
-    userId:{
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
     },
-    driverId:{
+    uniqueId: {
+        type: String,
+        unique: true
+    },
+    driverId: {
         type: mongoose.Schema.Types.ObjectId,
     },
-    locationName:{
+    locationName: {
         type: String,
         required: true
     },
-    distance:{
+    distance: {
         type: String,
-        //required: true
     },
     username: {
         type: String,
@@ -35,13 +39,13 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    pickupLocationName:{
+    pickupLocationName: {
         type: String,
-        require: true
+        required: true
     },
     time: {
         type: String,
-        require: true,
+        required: true,
     },
     pickupLocation: {
         type: {
@@ -54,7 +58,7 @@ const bookingSchema = new mongoose.Schema({
             required: true
         }
     },
-    destinationLocation:{
+    destinationLocation: {
         type: {
             type: String,
             enum: ['Point'],
@@ -68,25 +72,24 @@ const bookingSchema = new mongoose.Schema({
     driver: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Driver',
-        //required: true
     },
-    carModel: { 
-        type: String 
+    carModel: {
+        type: String
     },
     vehicleType: {
-        type: String 
+        type: String
     },
     status: {
-        type: String, default: 'Pending' 
+        type: String, 
+        default: 'Pending' 
     },
     phoneNumber: {
         type: String
     },
-
-    cost:{
+    cost: {
         type: Number,
     },
-    date:{
+    date: {
         type: String,
         default: dateHandle()
     }
@@ -95,6 +98,35 @@ const bookingSchema = new mongoose.Schema({
 // Create a 2dsphere index on the pickupLocation field
 bookingSchema.index({ pickupLocation: '2dsphere' });
 bookingSchema.index({ destinationLocation: '2dsphere' });
+
+// Pre-save hook to generate uniqueId
+bookingSchema.pre('save', async function(next) {
+    if (!this.isNew) {
+        return next();
+    }
+
+    const lastBooking = await this.constructor.findOne().sort({ _id: -1 }).select('uniqueId').lean();
+
+    let nextUniqueId = 'A1';
+
+    if (lastBooking && lastBooking.uniqueId) {
+        const lastUniqueId = lastBooking.uniqueId;
+        const letter = lastUniqueId.charAt(0);
+        const number = parseInt(lastUniqueId.slice(1), 10);
+
+        // Check if number can be incremented
+        if (number < 9) {
+            nextUniqueId = `${letter}${number + 1}`;
+        } else {
+            // Increment the letter and reset the number
+            const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+            nextUniqueId = `${nextLetter}1`;
+        }
+    }
+
+    this.uniqueId = nextUniqueId;
+    next();
+});
 
 const bookModel = mongoose.model('Booking', bookingSchema);
 

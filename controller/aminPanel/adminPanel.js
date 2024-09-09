@@ -4,7 +4,7 @@
     const tripsModel = require('../../model/booking/userBooking');
     const distance = require('../../model/booking/maxDistance');
     const properities = require('../../model/booking/tripProperity');
-
+    const bookModel = require('../../model/booking/userBooking');
     const updateProperity = async function(req, res) {
         const { time, distance } = req.body;
         try {
@@ -171,6 +171,73 @@
         }
     }
 
+    const getDriver = async function(req, res){
+        const driverId = req.params.id;
+        try{
+            const driver = await driversModel.findOne({_id: driverId});
+            if(!driver){
+                res.status(404).json({message: "Driver Not Found"});
+            }
+            res.status(200).json({driver})
+        }
+        catch(error){
+            console.log(error);
+            res.status(500).json({message: error.message});
+        }
+    }
+    const getUser = async function(req, res){
+        const userId = req.params.id;
+        try{
+            const user = await usersModel.findOne({_id: userId});
+            if(!user){
+                res.status(404).json({message: "Driver Not Found"});
+            }
+            res.status(200).json({user})
+        }
+        catch(error){
+            console.log(error);
+            res.status(500).json({message: error.message});
+        }
+    }
+
+    const getTrips = async function(req, res) {
+        try {
+            // Fetch all trips
+            const trips = await bookModel.find();
+    
+            if (!trips || trips.length === 0) {
+                return res.status(404).json({ message: "No Trips Found" });
+            }
+    
+            // Extract unique userIds from trips
+            const driverIds = trips.map(trip => trip.driverId);
+            const uniqueDriverIds = Array.from(new Set(driverIds));
+    
+            // Fetch user data for these driverIds
+            const driverData = await driversModel.find({ _id: { $in: uniqueDriverIds } });
+    
+            // Create a map of user data for quick lookup
+            const userMap = driverData.reduce((map, user) => {
+                map[user._id] = user;
+                return map;
+            }, {});
+    
+            // Attach user data to each trip
+            const tripsWithUserData = trips.map(trip => ({
+                ...trip.toObject(),
+                driverData: userMap[trip.driverId] || null
+            }));
+    
+            // Respond with trips including user data
+            res.status(200).json(tripsWithUserData);
+        } catch (error) {
+            console.error('Error fetching trips:', error);
+            res.status(500).json({ message: "An error occurred while fetching trips.", error: error.message });
+        }
+    };
+    
+    
+
 
     // export functions 
     module.exports = {
@@ -184,5 +251,9 @@
         alert,
         getProperity,
         updateProperity,
-        addProperites
+        addProperites,
+        getDriver,
+        getDriver,
+        getUser,
+        getTrips
     }

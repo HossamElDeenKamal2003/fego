@@ -8,38 +8,28 @@ const multer = require("multer");
 const fs = require("fs");
 const http = require("http");
 const { Server } = require("socket.io");
-const { findDrivers, findDriversInternal } = require("./controller/booking/userBooking");
-const { updateLocation } = require("./controller/booking/driverDest");
-
 const socketHandler = require('./controller/booking/offerWebsocket');
 const offerController = require('./controller/booking/offers')
-const driverSocketHandler = require('./controller/booking/driverWebsocket');
 const tripSocketHandler = require('./controller/booking/allTripswebSocket');
 const chatHandler = require('./controller/booking/chating/newChatHandler');
-const {tripStatusHandler,driverDataHandler} = require('./controller/booking/statusTripSockets/acceotTripSockets');
-//const {updateLocation} = require('./controller/booking/driverDest');
-//const driverDataHandler = require('./controller/booking/statusTripSockets/acceotTripSockets');
+const { driverDataHandler } = require('./controller/booking/statusTripSockets/acceotTripSockets');
+
 dotenv.config();
 console.log(process.env.NODE_ENV);
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-
-// Middleware setup
 app.use(cors());
+// Middleware setup
 app.use(express.json());
-
 // Set EJS as the view engine
 app.set("view engine", "ejs");// index.html
 app.set("views", path.join(__dirname, "views"));
-
 // Middleware for logging HTTP requests
 app.use(morgan("combined"));
-
 // Connect to MongoDB
-mongoose
-    .connect(process.env.DB_URL, {
+mongoose.connect(process.env.DB_URL, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     })
@@ -80,7 +70,6 @@ const createChat = require("./router/chatingRouter/createChat");
 const admin = require('./router/admin/adminRouters');
 // Middleware for static files
 app.use("/uploads", express.static(uploadDir));
-
 // Use routers
 app.use("/auth", user);
 app.use("/authdriver", driver);
@@ -89,122 +78,21 @@ app.use("/user-profile", userProfile);
 app.use("/driverprofile", driverProfile);
 app.use("/prices", prices);
 app.use("/create", createChat);
-app.use('/admin', admin);
-// Define a root route to serve an EJS page (optional)
-app.get("/", (req, res) => {
-    res.send("Express");
-});
+app.use("/admin", admin);
+
 
 // Track user searches
 const userSearches = new Map(); // Map<socketId, searchCriteria>
 
-// WebSocket logic
-// io.on("connection", (socket) => {
-//     console.log("A user connected");
-
-//     // Handle driver location update event
-//     socket.on("updateLocation", async (data) => {
-//         const { driverId, longitude, latitude } = data;
-
-//         if (!driverId || longitude === undefined || latitude === undefined) {
-//             socket.emit("error", { message: "Driver ID, longitude, and latitude are required" });
-//             return;
-//         }
-
-//         try {
-//             // Call the updateLocation function with the received data
-//             const updatedDriver = await updateLocation(driverId, longitude, latitude);
-
-//             // Notify clients about the location update
-//             socket.emit("driverLocationUpdated", updatedDriver);
-
-//             // Check if the updated location matches any user's search criteria
-//             for (const [socketId, searchCriteria] of userSearches.entries()) {
-//                 const { vehicleType, latitude: searchLat, longitude: searchLng } = searchCriteria;
-
-//                 if (vehicleType === updatedDriver.vehicleType) {
-//                     const distance = calculateDistance(searchLat, searchLng, latitude, longitude);
-
-//                     if (distance <= 5000) { // Within 5km
-//                         io.to(socketId).emit("matchingDriverFound", updatedDriver);
-//                     }
-//                 }
-//             }
-//         } catch (error) {
-//             console.error("Error updating location:", error);
-//             socket.emit("error", { message: error.message });
-//         }
-//     });
-
-//     // Handle 'findDrivers' event from the client
-//     socket.on("findDrivers", async (data) => {
-//         const { vehicleType, latitude, longitude } = data;
-//         console.log(vehicleType, latitude, longitude);
-
-//         // Track user search
-//         userSearches.set(socket.id, { vehicleType, latitude, longitude });
-
-//         try {
-//             const drivers = await findDrivers(vehicleType, latitude, longitude);
-
-//             if (drivers.length > 0) {
-//                 socket.emit("driversFound", drivers);
-//             } else {
-//                 socket.emit("noDriversFound", {
-//                     message: "No drivers available in your area",
-//                 });
-//             }
-//         } catch (error) {
-//             console.log(error);
-//             socket.emit("error", { message: error.message });
-//         }
-//     });
-
-//     // Handle disconnection
-//     socket.on("disconnect", () => {
-//         console.log("A user disconnected");
-//         userSearches.delete(socket.id); // Clean up user search data
-//     });
-// });
-// Inside server.js, WebSocket connection handler
-// io.on("connection", (socket) => {
-//     console.log("A user connected");
-
-//     // Handle offer addition via WebSocket
-//     socket.on('addOffer', async (data) => {
-//         const { tripId, driverId, offer } = data;
-
-//         if (!tripId || !driverId || !offer) {
-//             socket.emit("error", { message: "tripId, driverId, and offer are required" });
-//             return;
-//         }
-
-//         try {
-//             const newOffer = new offerModel({ tripId, driverId, offer });
-//             await newOffer.save();
-
-//             // Notify all clients about the new offer
-//             io.emit('offerAdded', newOffer);
-//         } catch (error) {
-//             console.error('Error adding offer:', error);
-//             socket.emit('error', { message: error.message });
-//         }
-//     });
-
-//     // Handle disconnection
-//     socket.on("disconnect", () => {
-//         console.log("A user disconnected");
-//     });
-// });
 const locationHandler = require('./controller/booking/driverDest'); // Adjust the path as necessary
-
+const costHandler = require('./controller/booking/costUpdate');
 offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
 // socketHandler(io);
 socketHandler(io);
 tripSocketHandler(io);
-
+costHandler(io);
 //driverSocketHandler(io); // Driver-specific WebSocket handler
 chatHandler(io);
 //tripStatusHandler(io);
@@ -219,8 +107,6 @@ const connectedUsers = {}; // Change from Map to an object
 
 io.on('connection', (socket) => {
     console.log('New connection');
-
-
     // When a user disconnects
     socket.on('disconnect', () => {
         // Remove userId from connectedUsers if necessary
@@ -229,7 +115,14 @@ io.on('connection', (socket) => {
 });
 
 module.exports = { connectedUsers, io };
-
+app.get("/", (req, res) => {
+    //const isSignUp = false; 
+    const isSignUp = req.query.signup === 'true'; // Example logic to determine signup state
+    res.render('index', { isSignUp });
+});
+app.get('/home', (req, res)=>{
+    
+})
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

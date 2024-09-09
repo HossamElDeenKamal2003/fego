@@ -28,15 +28,15 @@ const locationHandler = (io) => {
                 );
 
                 if (!result) {
-                    socket.emit('error', { message: 'Driver not found' });
                     return;
-                }
+                }   
+                console.log(driverId);
 
                 io.emit(`location-updated/${driverId}`, {
                     driverId,
-                    location: result.location
+                    location: result.location,
                 });
-
+                console.log(`Emitted location update for driver ${driverId}:`, result.location);
             } catch (error) {
                 console.error('Error updating location:', error);
                 socket.emit('error', { message: 'Error updating location' });
