@@ -186,7 +186,7 @@ const bookTrip = async (req, res) => {
         // Send notification to all available drivers
         for (const driver of availableDrivers) {
             // Check if the driver has an FCM token saved in the database
-            const driverFCMToken = 'dJArw3O4TT-OyIw31zjbUV:APA91bE6UeJzoKRLAIU-ONh12KK82Lvy128k37sh0W6aZl_cNdV1B6cCySTGjO_NXdbdONAeCmJ9SFwpiGC7oPDVj4tyBHEToVUcsFiEgdgN0U-L3xpgDZ4em5iP4UA84xxQwzCx3KvN' // Assuming drivers have an 'fcmToken' field
+            const driverFCMToken = driver.driverFCMToken;
 
             if (driverFCMToken) {
                 const notificationMessage = {

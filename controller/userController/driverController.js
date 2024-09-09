@@ -20,7 +20,8 @@ const signup = async function(req, res) {
             vehicleType,
             password,
             latitude,
-            longitude
+            longitude,
+            driverFCMToken
         } = req.body;
 
         // Profile image should be declared after req.files is available
@@ -65,7 +66,7 @@ const signup = async function(req, res) {
         const driverLocation = new driverFind({
             driverId: newDriver._id,
             profile_image: newDriver.profile_image,
-            driverFCMToken,
+            driverFCMToken: "",
             username: newDriver.username,
             carModel: newDriver.carModel,
             carNumber: newDriver.carNumber,
@@ -98,7 +99,8 @@ const signup = async function(req, res) {
                 location: driverLocation.location,
                 driverId: driverLocation.driverId,
                 carNumber: carNumber,
-                carColor: carColor
+                carColor: carColor,
+                driverFCMToken,
             }
         });
     } catch (error) {
@@ -263,15 +265,28 @@ const handleToken = async function(req, res) {
     const { driverFCMToken } = req.body;
 
     try {
-        const found = await driverFind.findByIdAndUpdate(
-            id, // Directly use id here
-            { $set: { driverFCMToken: driverFCMToken } },
+        if(!driverFCMToken){
+            res.status(400).json({ message: "driverFCMToken is required" });
+        }
+        // Correct usage of findByIdAndUpdate without wrapping the id in an object
+        const found = await Driver.findOneAndUpdate(
+            {_id: id},
+            { driverFCMToken: driverFCMToken },
+            { new: true }
+        );
+        const found2 = await driverFind.findOneAndUpdate(
+            {driverId: id},
+            { driverFCMToken: driverFCMToken },
             { new: true }
         );
         
         if (!found) {
-            return res.status(404).json({ message: "Driver not found" });
+            return res.status(404).json({ message: "driver1 not found" });
         }
+        if (!found2) {
+            return res.status(404).json({ message: "driver2 not found" });
+        }
+
 
         res.status(200).json({ message: "Token sent successfully", driverFCMToken });
     } catch (error) {
@@ -279,6 +294,7 @@ const handleToken = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 module.exports = {
     signup,

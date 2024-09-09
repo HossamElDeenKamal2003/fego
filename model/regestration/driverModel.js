@@ -13,6 +13,7 @@ const driverSchema = new mongoose.Schema({
     },
     driverFCMToken:{
         type: String,
+        default: null,
     },
     phoneNumber: {
         type: String,

@@ -35,7 +35,7 @@ const sendOtp = async (phoneNumber, otp) => {
 
 // Sign-up function
 const signUp = async (req, res) => {
-    const { username, email, phoneNumber, password, profile_image } = req.body;
+    const { username, email, phoneNumber, password, profile_image, userFCMToken } = req.body;
 
     if (!username || !email || !phoneNumber || !password) {
         return res.status(400).json({ message: 'All fields are required' });
@@ -93,11 +93,10 @@ const signUp = async (req, res) => {
             userFCMToken,
             phoneNumber: newUser.phoneNumber
         };
-
         res.status(201).json({ message: 'User created successfully', user: userData });
     } catch (error) {
         console.error('Error during user registration:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -261,9 +260,12 @@ const handleToken = async function(req, res) {
     const { userFCMToken } = req.body;
 
     try {
-        const found = await User.findByIdAndUpdate(
-            id, // Directly use id here
-            { $set: { driverFCMToken: userFCMToken } },
+        if(!userFCMToken){
+            res.status(400).json({message: "userFCMToken is required"});
+        }
+        const found = await User.findOneAndUpdate(
+            {_id: id},
+            { userFCMToken: userFCMToken },
             { new: true }
         );
         
@@ -271,7 +273,7 @@ const handleToken = async function(req, res) {
             return res.status(404).json({ message: "Driver not found" });
         }
 
-        res.status(200).json({ message: "Token sent successfully", driverFCMToken });
+        res.status(200).json({ message: "Token sent successfully", userFCMToken });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });

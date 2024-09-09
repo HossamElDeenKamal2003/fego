@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
     },
     userFCMToken:{
         type: String,
+        default: null,
     },
     username: {
         type: String,

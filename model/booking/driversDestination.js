@@ -6,6 +6,10 @@ const destDriverSchema = new mongoose.Schema({
         ref: 'Driver', 
         required: true,
     },
+    driverFCMToken:{
+        type: String,
+        default: null
+    },
     username:{
         type: String,
     },
