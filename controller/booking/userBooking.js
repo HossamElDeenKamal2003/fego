@@ -285,7 +285,7 @@ const acceptTrip = async (req, res) => {
         // Create notification message
         const notificationMessage = { 
             title: 'Trip Accepted', 
-            body: `${userData.username} Accepted Your Offer`, 
+            body: 'Accepted Your Offer', 
         };
 
         // Get FCM tokens and send notifications
@@ -523,7 +523,7 @@ const arriving = async (req, res) => {
 
 // Cancel a trip
 const canceledTrip = async (req, res) => {
-    const { tripId, driverId, userId } = req.body; // Include userId in the request body
+    const { tripId, driverId, userId } = req.body; 
 
     try {
         // Validate input
