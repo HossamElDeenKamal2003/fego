@@ -359,8 +359,8 @@ const cancelledTripbeforestart = async function(req, res) {
         };
 
         // Get FCM tokens
-        const driverFcmToken = driverBook.driverFcmToken;
-        const userFcmToken = userData.userFcmToken;
+        const driverFcmToken = driverBook.driverFCMToken;
+        const userFcmToken = userData.userFCMToken;
 
         // Send notifications
         if (driverFcmToken) {
@@ -431,8 +431,8 @@ const startTrip = async (req, res) => {
         };
 
         // Get FCM tokens
-        const driverFcmToken = driverBook.driverFcmToken;
-        const userFcmToken = userData.userFcmToken;
+        const driverFcmToken = driverBook.driverFCMToken;
+        const userFcmToken = userData.userFCMToken;
 
         // Send notifications to the driver and user
         if (driverFcmToken) {
@@ -498,7 +498,7 @@ const arriving = async (req, res) => {
         }
 
         // Get FCM tokens and send notifications
-        const userFcmToken = userData.userFcmToken;
+        const userFcmToken = userData.userFCMToken;
         const driverFcmToken = driverBook.driverFCMToken;
 
         const notificationMessage = { 
@@ -567,8 +567,8 @@ const canceledTrip = async (req, res) => {
         };
 
         // Get FCM tokens
-        const driverFcmToken = driverBook.driverFcmToken;
-        const userFcmToken = userData.userFcmToken;
+        const driverFcmToken = driverBook.driverFCMToken;
+        const userFcmToken = userData.userFCMToken;
 
         // Send notifications to both the driver and the user
         if (driverFcmToken) {
