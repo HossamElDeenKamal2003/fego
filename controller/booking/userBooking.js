@@ -289,8 +289,8 @@ const acceptTrip = async (req, res) => {
         };
 
         // Get FCM tokens and send notifications
-        const driverFCMToken = driverBook.driverFcmToken;
-        const userFCMToken = userData.userFcmToken;
+        const driverFCMToken = driverBook.driverFCMToken;
+        const userFCMToken = userData.userFCMToken;
 
         if (driverFCMToken) {
             sendNotification(driverFCMToken, notificationMessage);
