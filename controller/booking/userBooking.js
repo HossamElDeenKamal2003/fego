@@ -199,7 +199,7 @@ const bookTrip = async (req, res) => {
             } else {
                 console.log(`Driver ${driver.username} does not have an FCM token.`);
             }
-        }
+        } 
 
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
@@ -253,12 +253,15 @@ const acceptTrip = async (req, res) => {
             return res.status(400).json({ message: 'Data required' });
         }
 
-        // Fetch the driver, booking, user, and driver location by their IDs
-        const driverBook = await detailTrip.findOne({ _id: driverId });
-        const booking = await bookModel.findOne({ _id: tripId });
-        const userData = await user.findOne({ _id: userId });
-        const driverLocation = await driverDestination.findOne({ driverId: driverId });
-        const driverData = await detailTrip.findOne({_id: driverId})
+        // Fetch data in parallel
+        const [driverBook, booking, userData, driverLocation] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            bookModel.findOne({ _id: tripId }),
+            user.findOne({ _id: userId }),
+            driverDestination.findOne({ driverId: driverId })
+        ]);
+
+        // Validate data
         if (!booking) {
             return res.status(404).json({ message: 'Trip not found' });
         }
@@ -268,10 +271,34 @@ const acceptTrip = async (req, res) => {
         if (!userData) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const offer = await offers.findOne({_id: offerId});
+
+        const offer = await offers.findOne({ _id: offerId });
+        if (!offer) {
+            return res.status(404).json({ message: 'Offer not found' });
+        }
+
+        // Update booking details
         booking.status = 'accepted';
         booking.cost = offer.offer || booking.cost;
         booking.driverId = driverId;
+
+        // Create notification message
+        const notificationMessage = { 
+            title: 'Trip Accepted', 
+            body: `${userData.username} Accepted Your Offer`, 
+        };
+
+        // Get FCM tokens and send notifications
+        const driverFCMToken = driverBook.driverFcmToken;
+        const userFCMToken = userData.userFcmToken;
+
+        if (driverFCMToken) {
+            sendNotification(driverFCMToken, notificationMessage);
+        }
+        if (userFCMToken) {
+            sendNotification(userFCMToken, notificationMessage);
+        }
+
         // Find and delete the trip from pendingModel
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
         if (!deletedPendingTrip) {
@@ -295,43 +322,67 @@ const acceptTrip = async (req, res) => {
 
 
 
+
 const cancelledTripbeforestart = async function(req, res) {
-    const { tripId } = req.body;
-    
+    const { tripId, driverId, userId } = req.body; // Ensure driverId and userId are passed
+
     try {
-        if (!tripId) {
-            return res.status(400).json({ message: 'Trip ID is required' });
+        if (!tripId || !driverId || !userId) {
+            return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
 
         // Find and update the booking
-        const booking = await bookModel.findOneAndUpdate({ _id: tripId },  { status: 'cancelled' }, { new: true });
+        const booking = await bookModel.findOneAndUpdate({ _id: tripId }, { status: 'cancelled' }, { new: true });
 
         if (!booking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        //booking.status = 'cancelled';
-        //const updatedBooking = await booking.save();
+        // Retrieve the driver and user information
+        const [driverBook, userData] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            user.findOne({ _id: userId })
+        ]);
 
-        // Delete from pending model
-        // const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
-        // if (!deletedPendingTrip) {
-        //     console.warn(`Trip ${tripId} not found in pendingModel`);
-        // }
-
-        // Emit cancellation event
-        if (global.io) {
-            // Ensure driverBook and userId are defined or passed correctly
-            global.io.emit(`tripcancellBefore/${tripId}`, { booking }); // Assuming driverBook and userId should be included if defined
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
         }
 
-        // Respond with updated booking
+        if (!userData) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Prepare the notification message
+        const notificationMessage = {
+            title: 'Trip Cancelled',
+            body: 'The trip has been cancelled before it started.',
+        };
+
+        // Get FCM tokens
+        const driverFcmToken = driverBook.driverFcmToken;
+        const userFcmToken = userData.userFcmToken;
+
+        // Send notifications
+        if (driverFcmToken) {
+            sendNotification(driverFcmToken, notificationMessage);
+        }
+        if (userFcmToken) {
+            sendNotification(userFcmToken, notificationMessage);
+        }
+
+        // Emit cancellation event to the user and driver via WebSocket
+        if (global.io) {
+            global.io.emit(`tripcancellBefore/${tripId}`, { booking, driverBook, userData });
+        }
+
+        // Respond with the updated booking
         res.status(200).json({ booking });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
 
 
 // Start a trip
@@ -340,35 +391,66 @@ const startTrip = async (req, res) => {
 
     try {
         // Validate input
-        if (!tripId || !driverId) {
-            return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
+        if (!tripId || !driverId || !userId) {
+            return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
 
-        const driverBook = await detailTrip.findOne({_id: driverId})
-        const booking = await bookModel.findOne({ _id: tripId});
+        // Fetch driver and booking details
+        const [driverBook, booking, userData] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            bookModel.findOne({ _id: tripId }),
+            user.findOne({ _id: userId })
+        ]);
 
         if (!booking) {
-            return res.status(404).json({ message: 'trip not found' });
+            return res.status(404).json({ message: 'Trip not found' });
         }
-        if(!driverBook){
-            return res.status(404).json({ message: 'driver not found' });
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
+        }
+        if (!userData) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update the status to 'accepted'
+        // Update the trip status to 'start'
         booking.status = 'start';
-        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
 
+        // Delete the trip from the pending model
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }
 
+        // Save the updated booking
         const updatedBooking = await booking.save();
-        if (global.io) {
-            global.io.emit(`tripStarted/${tripId}`, { updatedBooking, driverBook, userId });
+
+        // Prepare the notification message
+        const notificationMessage = {
+            title: 'Trip Started',
+            body: `Trip ${booking.uniqueId} has started.`,
+        };
+
+        // Get FCM tokens
+        const driverFcmToken = driverBook.driverFcmToken;
+        const userFcmToken = userData.userFcmToken;
+
+        // Send notifications to the driver and user
+        if (driverFcmToken) {
+            sendNotification(driverFcmToken, notificationMessage);
         }
-        res.status(200).json({updatedBooking, driverBook});
+        if (userFcmToken) {
+            sendNotification(userFcmToken, notificationMessage);
+        }
+
+        // Emit real-time event using WebSocket
+        if (global.io) {
+            global.io.emit(`tripStarted/${tripId}`, { updatedBooking, driverBook, userData });
+        }
+
+        // Respond with the updated booking and driver data
+        res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -382,17 +464,25 @@ const arriving = async (req, res) => {
             return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
         }
 
-        const driverBook = await detailTrip.findOne({_id: driverId})
-        const booking = await bookModel.findOne({ _id: tripId});
+        // Fetch data in parallel
+        const [driverBook, booking, userData] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            bookModel.findOne({ _id: tripId }),
+            user.findOne({ _id: userId }) // Assuming User is your model
+        ]);
 
+        // Validate data
         if (!booking) {
-            return res.status(404).json({ message: 'trip not found' });
+            return res.status(404).json({ message: 'Trip not found' });
         }
-        if(!driverBook){
-            return res.status(404).json({ message: 'driver not found' });
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
+        }
+        if (!userData) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        // Update the status to 'accepted'
+        // Update the status to 'Arriving'
         booking.status = 'Arriving';
         const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
 
@@ -401,53 +491,106 @@ const arriving = async (req, res) => {
         }
 
         const updatedBooking = await booking.save();
+
+        // Emit real-time event
         if (global.io) {
             global.io.emit(`tripArriving/${tripId}`, { updatedBooking, driverBook, userId });
         }
-        res.status(200).json({updatedBooking, driverBook});
+
+        // Get FCM tokens and send notifications
+        const userFcmToken = userData.userFcmToken;
+        const driverFcmToken = driverBook.driverFCMToken;
+
+        const notificationMessage = { 
+            title: 'Trip Arrival', 
+            body: 'The driver is arriving.' 
+        };
+        
+        if (driverFcmToken) {
+            sendNotification(driverFcmToken, notificationMessage);
+        }
+        if (userFcmToken) {
+            sendNotification(userFcmToken, notificationMessage);
+        }
+
+        res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
 
+
 // Cancel a trip
 const canceledTrip = async (req, res) => {
-    const { tripId, driverId } = req.body;
+    const { tripId, driverId, userId } = req.body; // Include userId in the request body
 
     try {
         // Validate input
-        if (!tripId || !driverId) {
-            return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
+        if (!tripId || !driverId || !userId) {
+            return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
 
-        const driverBook = await detailTrip.findOne({_id: driverId})
-        const booking = await bookModel.findOne({ _id: tripId});
+        // Fetch driver, booking, and user details
+        const [driverBook, booking, userData] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            bookModel.findOne({ _id: tripId }),
+            user.findOne({ _id: userId })
+        ]);
 
         if (!booking) {
-            return res.status(404).json({ message: 'trip not found' });
+            return res.status(404).json({ message: 'Trip not found' });
         }
-        if(!driverBook){
-            return res.status(404).json({ message: 'driver not found' });
+        if (!driverBook) {
+            return res.status(404).json({ message: 'Driver not found' });
         }
-        // Update the status to 'accepted'
-        booking.status = 'cancelled';
-        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
+        if (!userData) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
+        // Update the status to 'cancelled'
+        booking.status = 'cancelled';
+
+        // Delete the trip from the pending model
+        const deletedPendingTrip = await pendingModel.findOneAndDelete({ _id: tripId });
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
         }
 
+        // Save the updated booking
         const updatedBooking = await booking.save();
-        if (global.io) {
-            global.io.emit(`tripCancell/${tripId}`, { updatedBooking, driverBook, userId });
+
+        // Prepare the notification message
+        const notificationMessage = {
+            title: 'Trip Cancelled',
+            body: 'The trip has been cancelled.',
+        };
+
+        // Get FCM tokens
+        const driverFcmToken = driverBook.driverFcmToken;
+        const userFcmToken = userData.userFcmToken;
+
+        // Send notifications to both the driver and the user
+        if (driverFcmToken) {
+            sendNotification(driverFcmToken, notificationMessage);
         }
-        res.status(200).json({updatedBooking, driverBook});
+        if (userFcmToken) {
+            sendNotification(userFcmToken, notificationMessage);
+        }
+
+        // Emit real-time event using WebSocket
+        if (global.io) {
+            global.io.emit(`tripCancelled/${tripId}`, { updatedBooking, driverBook, userData });
+        }
+
+        // Respond with the updated booking and driver data
+        res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
-        console.log(error.message);
+        console.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 // End a trip
 const endTrip = async (req, res) => {

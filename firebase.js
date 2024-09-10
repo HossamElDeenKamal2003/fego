@@ -11,7 +11,7 @@ const sendNotification = (token, message) => {
         notification: {
             title: message.title,
             body: message.body,
-            sound: 'default'
+            //sound: 'default'
         },
         token: token,
     };

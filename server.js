@@ -70,7 +70,6 @@ const createChat = require("./router/chatingRouter/createChat");
 const admin = require('./router/admin/adminRouters');
 // Middleware for static files
 app.use("/uploads", express.static(uploadDir));
-// Use routers
 app.use("/auth", user);
 app.use("/authdriver", driver);
 app.use("/book", book);
