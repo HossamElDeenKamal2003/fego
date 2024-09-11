@@ -991,8 +991,7 @@ const retrieveTrip = async function(req, res) {
         const driver = trip.driverId;
         const driverDataLocation = await driverDestination.findOne({ driverId: driver });
         const driverData = await detailTrip.findOne({ _id: driver });
-        const location = await driverDataLocation.location;
-        res.status(200).json({ trip, driverDataLocation, driverData, location });
+        res.status(200).json({ trip, driverDataLocation, driverData });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
