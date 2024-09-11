@@ -20,7 +20,8 @@ const {
     getPrice,
     deletePrice,
     updateDistance,
-    getDistance
+    getDistance,
+    retrieveTrip
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -53,4 +54,5 @@ router.get('/get-prices', getPrice);
 router.post('/delete-price', deletePrice);
 router.patch('/max-distance', updateDistance);
 router.get('/get-distance-find-drivers', getDistance);
+router.get('/retreive-data', retrieveTrip);
 module.exports = router;

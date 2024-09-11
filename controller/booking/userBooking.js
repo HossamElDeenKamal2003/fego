@@ -13,7 +13,7 @@ const io = new Server(server);
 const Distance = require('../../model/booking/maxDistance.js');
 const offers = require('../../model/booking/offers.js');
 const PricesModel = require('../../model/booking/prices.js');
-const sendNotification = require('../../firebase.js'); // Import the sendNotification function
+const sendNotification = require('../../firebase.js');
 
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
@@ -981,6 +981,27 @@ const costHandler = (io) => {
     });
 };
 
+const retrieveTrip = async function(req, res) {
+    const { tripId } = req.body;
+    try {
+        const trip = await booking.findOne({ _id: tripId });
+        if (!trip) {
+            return res.status(404).json({ message: "Trip Not Found" });
+        }
+        const driver = trip.driverId;
+        if (!driver) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+        const driverDataLocation = await driverDestination.findOne({ driverId: driver });
+        const driverData = await detailTrip.findOne({ _id: driver });
+        const location = await driverDataLocation.location;
+        res.status(200).json({ trip, driverDataLocation, driverData, location });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = costHandler;
 
 
@@ -1011,5 +1032,6 @@ module.exports = {
     getPrice,
     deletePrice,
     updateDistance,
-    getDistance
+    getDistance,
+    retrieveTrip
 };
