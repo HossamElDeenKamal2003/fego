@@ -982,7 +982,7 @@ const costHandler = (io) => {
 };
 
 const retrieveTrip = async function(req, res) {
-    const { tripId } = req.body;
+    const { tripId } = req.params.id;
     try {
         const trip = await booking.findOne({ _id: tripId });
         if (!trip) {
