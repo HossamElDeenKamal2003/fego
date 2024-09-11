@@ -982,16 +982,13 @@ const costHandler = (io) => {
 };
 
 const retrieveTrip = async function(req, res) {
-    const { tripId } = req.params.id;
+    const { tripId } = req.body;
     try {
         const trip = await booking.findOne({ _id: tripId });
         if (!trip) {
             return res.status(404).json({ message: "Trip Not Found" });
         }
         const driver = trip.driverId;
-        if (!driver) {
-            return res.status(404).json({ message: "Driver Not Found" });
-        }
         const driverDataLocation = await driverDestination.findOne({ driverId: driver });
         const driverData = await detailTrip.findOne({ _id: driver });
         const location = await driverDataLocation.location;

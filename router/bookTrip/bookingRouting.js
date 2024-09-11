@@ -54,5 +54,5 @@ router.get('/get-prices', getPrice);
 router.post('/delete-price', deletePrice);
 router.patch('/max-distance', updateDistance);
 router.get('/get-distance-find-drivers', getDistance);
-router.get('/retreive-data/:id', retrieveTrip);
+router.post('/retreive-data', retrieveTrip);
 module.exports = router;
