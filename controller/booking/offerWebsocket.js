@@ -14,7 +14,7 @@ const socketHandler = (io) => {
                 return;
             }
                 const user = await User.findOne({ _id: userId });
-                const userFCMToken = await user.userFCMToken;
+                const userFCMToken = user.userFCMToken;
             try {
                 // Upsert the offer
                 const upsertedOffer = await offerModel.findOneAndUpdate(
@@ -24,7 +24,7 @@ const socketHandler = (io) => {
                 );
                 const notificationMessage = {
                     title: 'New Trip Available',
-                    body: `A new trip to ${destination} is available for you.`,
+                    body: `A new trip to is available for you.`,
                 };
                 
                 // Send the FCM notification to the driver
