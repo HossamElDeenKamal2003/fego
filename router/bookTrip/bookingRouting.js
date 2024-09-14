@@ -62,5 +62,5 @@ router.post('/retreive-data', retrieveTrip);
 router.patch('/update-wallet/:id', userWallet);
 router.get('/get-user-wallet/:id', getUserWallet);
 router.get('/new-api/:id', newApi);
-router.get('/get-accepted', getAcceptModel)
+router.post('/get-accepted', getAcceptModel)
 module.exports = router;
