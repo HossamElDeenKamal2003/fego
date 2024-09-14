@@ -354,7 +354,7 @@ const acceptTrip = async (req, res) => {
 const getAcceptModel = async function(req, res){
     const { tripId, driverId, userId } = req.body;
     try{
-        const updateBooking = await bookModel.findOne({ _id: tripId });
+        const updatedBooking = await bookModel.findOne({ _id: tripId });
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const driverLocation = await driverDestination.findOne({ driverId: driverId });
         const userData = await User.findOne({ _id: userId })
