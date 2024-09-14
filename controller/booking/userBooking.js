@@ -361,7 +361,7 @@ const getAcceptModel = async function(req, res){
         if(!updateBooking){
             res.status(404).json({ message: "Trip Not Found"  });
         }
-        res.status(200).json({ updateBooking, driverBook, driverLocation, userData });
+        res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
     }
     catch(error){
         console.log(error);
