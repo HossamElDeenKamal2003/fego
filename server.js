@@ -16,23 +16,16 @@ const { driverDataHandler } = require('./controller/booking/statusTripSockets/ac
 
 dotenv.config();
 console.log(process.env.NODE_ENV);
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 app.use(cors());
-// Middleware setup
 app.use(express.json());
-// Set EJS as the view engine
-app.set("view engine", "ejs");// index.html
+app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-// Middleware for logging HTTP requests
 app.use(morgan("combined"));
-// Connect to MongoDB
-mongoose.connect(process.env.DB_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
+//connected to MONGODB
+mongoose.connect(process.env.DB_URL)
     .then(() => {
         console.log("MongoDB connected");
     })
@@ -115,9 +108,7 @@ io.on('connection', (socket) => {
 
 module.exports = { connectedUsers, io };
 app.get("/", (req, res) => {
-    //const isSignUp = false; 
-    const isSignUp = req.query.signup === 'true'; // Example logic to determine signup state
-    res.render('index', { isSignUp });
+    res.send("Express");
 });
 app.get('/home', (req, res)=>{
     
