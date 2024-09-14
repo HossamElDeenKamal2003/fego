@@ -373,7 +373,7 @@ const cancelledTripbeforestart = async function(req, res) {
 
         // Emit cancellation event to the user and driver via WebSocket
         if (global.io) {
-            global.io.emit(`tripcancellBefore/${tripId}`, { booking, driverBook, userData });
+            global.io.emit(`tripcancellBefore/${tripId}`, { booking, userData });
         }
 
         // Respond with the updated booking
