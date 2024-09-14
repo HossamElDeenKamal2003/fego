@@ -358,7 +358,7 @@ const getAcceptModel = async function(req, res){
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const driverLocation = await driverDestination.findOne({ driverId: driverId });
         const userData = await User.findOne({ _id: userId })
-        if(!updateBooking){
+        if(!updatedBooking){
             res.status(404).json({ message: "Trip Not Found"  });
         }
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
