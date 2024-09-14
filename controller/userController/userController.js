@@ -60,6 +60,7 @@ const signUp = async (req, res) => {
             userFCMToken,
             block: true,
             alerts: 0,
+            wallet: 0,
             password: bcrypt.hashSync(req.body.password, 10)
         });
         await newUser.save();

@@ -322,8 +322,6 @@ const acceptTrip = async (req, res) => {
 };
 
 
-
-
 const cancelledTripbeforestart = async function(req, res) {
     const { tripId, userId } = req.body; // Ensure driverId and userId are passed
 
@@ -344,10 +342,6 @@ const cancelledTripbeforestart = async function(req, res) {
             // detailTrip.findOne({ _id: driverId }),
             user.findOne({ _id: userId })
         ]);
-
-        if (!driverBook) {
-            return res.status(404).json({ message: 'Driver not found' });
-        }
 
         if (!userData) {
             return res.status(404).json({ message: 'User not found' });
