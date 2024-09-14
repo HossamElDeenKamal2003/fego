@@ -278,7 +278,6 @@ const calculateCost = async function(req, res) {
 
 const acceptTrip = async (req, res) => {
     const { tripId, driverId, userId, offerId } = req.body;
-
     try {
         // Validate input
         if (!tripId || !driverId || !userId || !offerId) {
@@ -352,6 +351,23 @@ const acceptTrip = async (req, res) => {
     }
 };
 
+const getAcceptModel = async function(req, res){
+    const { tripId, driverId, userId } = req.body;
+    try{
+        const updateBooking = await bookModel.findOne({ _id: tripId });
+        const driverBook = await detailTrip.findOne({ _id: driverId });
+        const driverLocation = await driverDestination.findOne({ driverId: driverId });
+        const userData = await User.findOne({ _id: userId })
+        if(!updateBooking){
+            res.status(404).json({ message: "Trip Not Found"  });
+        }
+        res.status(200).json({ updateBooking, driverBook, driverLocation, userData });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json(error.message);
+    }
+}
 
 const cancelledTripbeforestart = async function(req, res) {
     const { tripId, userId } = req.body; // Ensure driverId and userId are passed
@@ -1096,5 +1112,6 @@ module.exports = {
     retrieveTrip,
     userWallet,
     getUserWallet,
-    newApi
+    newApi,
+    getAcceptModel
 };
