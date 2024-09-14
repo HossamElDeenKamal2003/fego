@@ -23,7 +23,8 @@ const {
     getDistance,
     retrieveTrip,
     userWallet,
-    getUserWallet
+    getUserWallet,
+    newApi
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -59,4 +60,5 @@ router.get('/get-distance-find-drivers', getDistance);
 router.post('/retreive-data', retrieveTrip);
 router.patch('/update-wallet/:id', userWallet);
 router.get('/get-user-wallet/:id', getUserWallet);
+router.get('/new-api/:id', newApi)
 module.exports = router;
