@@ -21,7 +21,9 @@ const {
     deletePrice,
     updateDistance,
     getDistance,
-    retrieveTrip
+    retrieveTrip,
+    userWallet,
+    getUserWallet
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -55,4 +57,6 @@ router.post('/delete-price', deletePrice);
 router.patch('/max-distance', updateDistance);
 router.get('/get-distance-find-drivers', getDistance);
 router.post('/retreive-data', retrieveTrip);
+router.patch('/update-wallet/:id', userWallet);
+router.get('/get-user-wallet/:id', getUserWallet);
 module.exports = router;

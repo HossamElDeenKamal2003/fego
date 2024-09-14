@@ -14,6 +14,7 @@ const Distance = require('../../model/booking/maxDistance.js');
 const offers = require('../../model/booking/offers.js');
 const PricesModel = require('../../model/booking/prices.js');
 const sendNotification = require('../../firebase.js');
+const User = require('../../model/regestration/userModel.js');
 
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
@@ -324,7 +325,7 @@ const acceptTrip = async (req, res) => {
 
 
 const cancelledTripbeforestart = async function(req, res) {
-    const { tripId, driverId, userId } = req.body; // Ensure driverId and userId are passed
+    const { tripId, userId } = req.body; // Ensure driverId and userId are passed
 
     try {
         if (!tripId || !driverId || !userId) {
@@ -359,13 +360,13 @@ const cancelledTripbeforestart = async function(req, res) {
         };
 
         // Get FCM tokens
-        const driverFcmToken = driverBook.driverFCMToken;
+        // const driverFcmToken = driverBook.driverFCMToken;
         const userFcmToken = userData.userFCMToken;
 
         // Send notifications
-        if (driverFcmToken) {
-            sendNotification(driverFcmToken, notificationMessage);
-        }
+        // if (driverFcmToken) {
+        //     sendNotification(driverFcmToken, notificationMessage);
+        // }
         if (userFcmToken) {
             sendNotification(userFcmToken, notificationMessage);
         }
@@ -996,6 +997,44 @@ const retrieveTrip = async function(req, res) {
         console.error(error);
         res.status(500).json({ message: error.message });
     }
+};
+
+
+const userWallet = async function(req, res){
+    const id = req.params.id;
+    const {value} = req.body;
+    try{
+        const userFound = await User.findOne({ _id: id });
+        if(!userFound){
+            return res.status(404).json({ message: "User Not Found" });
+        }
+        const wallet = await User.findOneAndUpdate(
+            { _id: id },
+            { wallet: value },
+            {new: true}
+        );
+        res.status(200).json(wallet);
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getUserWallet = async function(req, res){
+    const id = req.params.id;
+    try{
+        const result = await User.findOne({ _id: id });
+        if(!result){
+            res.status(404).json({ message: "User Not Found" });
+        }
+        const wallet = result.wallet;
+        res.status(200).json({wallet});
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
 }
 
 module.exports = costHandler;
@@ -1029,5 +1068,7 @@ module.exports = {
     deletePrice,
     updateDistance,
     getDistance,
-    retrieveTrip
+    retrieveTrip,
+    userWallet,
+    getUserWallet
 };
