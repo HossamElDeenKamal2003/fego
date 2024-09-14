@@ -328,7 +328,7 @@ const cancelledTripbeforestart = async function(req, res) {
     const { tripId, userId } = req.body; // Ensure driverId and userId are passed
 
     try {
-        if (!tripId || !driverId || !userId) {
+        if (!tripId || !userId) {
             return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
 
@@ -340,8 +340,8 @@ const cancelledTripbeforestart = async function(req, res) {
         }
 
         // Retrieve the driver and user information
-        const [driverBook, userData] = await Promise.all([
-            detailTrip.findOne({ _id: driverId }),
+        const [userData] = await Promise.all([
+            // detailTrip.findOne({ _id: driverId }),
             user.findOne({ _id: userId })
         ]);
 
