@@ -218,7 +218,38 @@ const bookTrip = async (req, res) => {
     }
 };
 
+const newApi = async function(req, res) {
+    const id = req.params.id;
 
+    if (!id) {
+        return res.status(400).json({ message: "ID is required" });
+    }
+
+    try {
+        const booking = await bookModel.findById(id);
+        if (!booking) {
+            return res.status(404).json({ message: "Trip Not Found" });
+        }
+
+        const vehicleType = booking.vehicleType;
+        const latitude = booking.pickupLocation.coordinates[1];
+        const longitude = booking.pickupLocation.coordinates[0];
+
+        // Log the values to ensure they are being retrieved correctly
+        console.log('Booking Details:', { vehicleType, latitude, longitude });
+
+        const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
+
+        if (availableDrivers.length === 0) {
+            return res.status(200).json({ message: "No Drivers Here" });
+        }
+
+        res.status(200).json({ booking, availableDrivers });
+    } catch (error) {
+        console.error('API Error:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 const calculateCost = async function(req, res) {
@@ -1064,5 +1095,6 @@ module.exports = {
     getDistance,
     retrieveTrip,
     userWallet,
-    getUserWallet
+    getUserWallet,
+    newApi
 };
