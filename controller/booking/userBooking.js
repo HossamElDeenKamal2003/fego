@@ -15,6 +15,7 @@ const offers = require('../../model/booking/offers.js');
 const PricesModel = require('../../model/booking/prices.js');
 const sendNotification = require('../../firebase.js');
 const User = require('../../model/regestration/userModel.js');
+const Driver = require('../../model/regestration/driverModel.js');
 
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
@@ -213,7 +214,7 @@ const bookTrip = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error); // Log the full error
+        console.log(error); 
         return res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
@@ -674,7 +675,6 @@ const endTrip = async (req, res) => {
 const updateStatus = async (req, res) => {
     const { tripId, status } = req.body;
     try {
-        // Validate input
         if (!tripId || !status) {
             return res.status(400).json({ message: 'Trip ID and status are required' });
         }
@@ -1078,6 +1078,29 @@ const getUserWallet = async function(req, res){
     }
 }
 
+const seeTrip = async function(req, res) {
+    const { tripId, driverId } = req.body;
+    try {
+        const findTrip = await bookModel.findOne({ _id: tripId });
+        const findDriverDestination = await driverDestination.findOne({ driverId: driverId });
+        const findDriverData = await Driver.findOne({ _id: driverId }); // Corrected here
+        
+        if (!findTrip || !findDriverDestination || !findDriverData) {
+            return res.status(404).json({ message: "trip or driverDest or driver not found" });
+        }
+
+        if (global.io) {
+            io.emit("see-driver", findTrip, findDriverDestination, findDriverData);
+        }
+
+        res.status(200).json({ findTrip, findDriverDestination, findDriverData }); // Added a response here to complete the request
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 module.exports = costHandler;
 
 
@@ -1113,5 +1136,6 @@ module.exports = {
     userWallet,
     getUserWallet,
     newApi,
-    getAcceptModel
+    getAcceptModel,
+    seeTrip
 };

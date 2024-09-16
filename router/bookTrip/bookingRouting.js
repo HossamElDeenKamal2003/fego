@@ -25,7 +25,8 @@ const {
     userWallet,
     getUserWallet,
     newApi,
-    getAcceptModel
+    getAcceptModel,
+    seeTrip
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -62,5 +63,6 @@ router.post('/retreive-data', retrieveTrip);
 router.patch('/update-wallet/:id', userWallet);
 router.get('/get-user-wallet/:id', getUserWallet);
 router.get('/new-api/:id', newApi);
-router.post('/get-accepted', getAcceptModel)
+router.post('/get-accepted', getAcceptModel);
+router.post('/see-trip', seeTrip);
 module.exports = router;
