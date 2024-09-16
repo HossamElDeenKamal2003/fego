@@ -32,6 +32,8 @@ const {
     addOffer,
     getOffer
 } = require('../../controller/booking/offers');
+
+const { paytabs } = require('../../controller/booking/paytabs/paytabs');
 //const { updateLocation } = require('../../controller/booking/driverDest');
 const router = express.Router();
 
@@ -65,4 +67,5 @@ router.get('/get-user-wallet/:id', getUserWallet);
 router.get('/new-api/:id', newApi);
 router.post('/get-accepted', getAcceptModel);
 router.post('/see-trip', seeTrip);
+router.post('/pay-tabs', paytabs);
 module.exports = router;
