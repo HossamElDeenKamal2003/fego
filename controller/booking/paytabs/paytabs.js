@@ -75,4 +75,4 @@ const paytabs = async function(req, res) {
 };
 
 // Export the paytabs function
-module.exports = paytabs;
+module.exports = {paytabs};
