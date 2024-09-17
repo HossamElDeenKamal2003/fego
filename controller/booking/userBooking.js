@@ -16,7 +16,7 @@ const PricesModel = require('../../model/booking/prices.js');
 const sendNotification = require('../../firebase.js');
 const User = require('../../model/regestration/userModel.js');
 const Driver = require('../../model/regestration/driverModel.js');
-
+const acceptedModel = require('../../model/booking/acceptedModel');
 let connectedClients = {};
 const findDrivers = async (vehicleType, latitude, longitude) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
@@ -1041,6 +1041,37 @@ const retrieveTrip = async function(req, res) {
 };
 
 
+const addAcceptedTrip = async function(req, res){
+    const { tripId, driverId } = req.body;
+    try{
+        const addAccepted = new acceptedModel({
+            tripId: tripId,
+            driverId: driverId
+        });
+        await addAccepted.save();
+        res.status(200).json({ addAccepted: addAccepted });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getAccepted = async function(req, res){
+    const driverId = req.params.id;
+    try{
+        const driver = await Driver.findOne({ driverId: driverId });
+        if(!driver){
+            res.status(404).json({ message: "Driver Not Found" })
+        }
+        res.status(200).json({ message: "Driver Found" });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const userWallet = async function(req, res){
     const id = req.params.id;
     const {value} = req.body;
@@ -1101,6 +1132,9 @@ const seeTrip = async function(req, res) {
 }
 
 
+
+
+
 module.exports = costHandler;
 
 
@@ -1137,5 +1171,7 @@ module.exports = {
     getUserWallet,
     newApi,
     getAcceptModel,
-    seeTrip
+    seeTrip,
+    addAcceptedTrip,
+    getAccepted
 };

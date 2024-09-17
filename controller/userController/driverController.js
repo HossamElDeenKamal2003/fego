@@ -21,7 +21,8 @@ const signup = async function(req, res) {
             password,
             latitude,
             longitude,
-            driverFCMToken
+            driverFCMToken,
+            wallet,
         } = req.body;
 
         // Profile image should be declared after req.files is available
@@ -59,6 +60,7 @@ const signup = async function(req, res) {
             licence_expire_date,
             vehicleType,
             password: hashedPassword,
+            wallet,
         });
 
         await newDriver.save();
@@ -72,6 +74,7 @@ const signup = async function(req, res) {
             carNumber: newDriver.carNumber,
             carColor: newDriver.carColor,
             vehicleType: newDriver.vehicleType,
+            wallet: 0,
             location: {
                 type: "Point",
                 coordinates: [longitude, latitude]
@@ -101,6 +104,7 @@ const signup = async function(req, res) {
                 carNumber: carNumber,
                 carColor: carColor,
                 driverFCMToken,
+                wallet,
             }
         });
     } catch (error) {
@@ -294,6 +298,8 @@ const handleToken = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
+
 
 
 module.exports = {

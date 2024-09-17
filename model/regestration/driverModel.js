@@ -70,6 +70,11 @@ const driverSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    
+    wallet:{
+        type: Number,
+    },
+
     rate:{
         type: Number,
         default: 0,

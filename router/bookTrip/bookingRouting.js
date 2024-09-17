@@ -26,7 +26,9 @@ const {
     getUserWallet,
     newApi,
     getAcceptModel,
-    seeTrip
+    seeTrip,
+    addAcceptedTrip,
+    getAccepted
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -68,4 +70,6 @@ router.get('/new-api/:id', newApi);
 router.post('/get-accepted', getAcceptModel);
 router.post('/see-trip', seeTrip);
 router.post('/pay-tabs', paytabs);
+router.post('/add-accepted', addAcceptedTrip);
+router.get('/get-accepted-driver/:id', getAcceptModel)
 module.exports = router;

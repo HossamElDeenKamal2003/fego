@@ -273,7 +273,6 @@ const handleToken = async function(req, res) {
         if (!found) {
             return res.status(404).json({ message: "Driver not found" });
         }
-
         res.status(200).json({ message: "Token sent successfully", userFCMToken });
     } catch (error) {
         console.log(error);

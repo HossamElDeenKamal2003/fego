@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Replace with your PayTabs merchant details
-const PAYTABS_BASE_URL = 'https://secure-egypt.paytabs.com/payment/request'; // Egyptian region
+const PAYTABS_BASE_URL = 'https://merchant-egypt.PayTabs.com'; // Egyptian region
 const SERVER_KEY = 'SMJ9NJNMKR-JJWL2MBMTZ-GGTWRWK2ZBCBK2M9-2P9966-VBMN2N-BQDDBH';
 
 // Endpoint to initiate payment
@@ -17,7 +17,7 @@ const paytabs = async function(req, res) {
     const { username, email, phoneNumber, amount, cardId } = req.body;
     try {
         const paymentData = {
-            profile_id: 'STJ9NJNMKN-JJWL2MDDHK-KZDJJG9JGTCKK2M9-2P9766-VBMNDD-QNR6DD', // From PayTabs account
+            profile_id: 'STJ9NJNMKN-JJWL2MDDHK-KZDJJG9JGT CKK2M9-2P9766-VBMNDD-QNR6DD', // From PayTabs account
             tran_type: 'sale',             // For direct payment
             tran_class: 'ecom',            // For e-commerce transactions
             cart_id: req.body.cardId,         // Unique identifier for your transaction
@@ -32,7 +32,7 @@ const paytabs = async function(req, res) {
                 zip: '12345',
             },
 
-            // Uncomment and replace these URLs with your real callback and return URLs
+            //Uncomment and replace these URLs with your real callback and return URLs
             // callback: 'https://yourdomain.com/callback', // Your callback URL
             // return: 'https://yourdomain.com/success'     // URL to redirect after success
         };
