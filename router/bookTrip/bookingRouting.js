@@ -29,7 +29,10 @@ const {
     seeTrip,
     addAcceptedTrip,
     getAccepted,
-    driverCancel
+    driverCancel,
+    addVal,
+    update_min_val,
+    get_min_value
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -74,4 +77,7 @@ router.post('/pay-tabs', paytabs);
 router.post('/add-accepted', addAcceptedTrip);
 router.get('/get-accepted-driver/:id', getAccepted);
 router.patch('/driver-cancelled', driverCancel);
+router.post('/add-val', addVal);
+router.patch('/update_min_val', update_min_val);
+router.get('/get_min_value', get_min_value);
 module.exports = router;
