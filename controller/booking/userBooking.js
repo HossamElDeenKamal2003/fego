@@ -426,26 +426,29 @@ const cancelledTripbeforestart = async function(req, res) {
     }
 };
 
-const driverCancel = async function(req, res){
+const driverCancel = async function (req, res) {
     const { tripId, driverId } = req.body;
-    try{
+    try {
         const findtrip = await bookModel.findOne({ _id: tripId });
-        const finddriver = findtrip.driverId;
-        if(!findtrip){
-            return res.status(404).status({ message: "Trip Not found" });
+        if (!findtrip) {
+            return res.status(404).json({ message: "Trip Not Found" });
         }
-        if(finddriver){
+        
+        // Check if the driverId matches the trip's driverId
+        if (findtrip.driverId.toString() === driverId) {
+            // Update the trip status to "pending"
             findtrip.status = "pending";
-            res.status(200).json({ message: "Trip Cancelled From Driver" });
-        }else{
-            return res.status(404).json({ message: "Driver For This Trip Not Found" });
+            await findtrip.save();  
+            
+            return res.status(200).json({ message: "Trip Cancelled by Driver" });
+        } else {
+            return res.status(404).json({ message: "Driver for This Trip Not Found" });
         }
-    }
-    catch(error){
+    } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 
 
@@ -1081,7 +1084,7 @@ const addAcceptedTrip = async function(req, res){
 const getAccepted = async function(req, res){
     const driverId = req.params.id;
     try{
-        const driver = await Driver.findOne({ driverId: driverId });
+        const driver = await acceptedModel.findOne({ driverId: driverId });
         if(!driver){
             res.status(404).json({ message: "Driver Not Found" })
         }
