@@ -426,6 +426,27 @@ const cancelledTripbeforestart = async function(req, res) {
     }
 };
 
+const driverCancel = async function(req, res){
+    const { tripId, driverId } = req.body;
+    try{
+        const findtrip = await bookModel.findOne({ _id: tripId });
+        const finddriver = findtrip.driverId;
+        if(!findtrip){
+            return res.status(404).status({ message: "Trip Not found" });
+        }
+        if(finddriver){
+            findtrip.status = "pending";
+            res.status(200).json({ message: "Trip Cancelled From Driver" });
+        }else{
+            return res.status(404).json({ message: "Driver For This Trip Not Found" });
+        }
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 
 
 // Start a trip
@@ -1173,5 +1194,6 @@ module.exports = {
     getAcceptModel,
     seeTrip,
     addAcceptedTrip,
-    getAccepted
+    getAccepted,
+    driverCancel
 };

@@ -28,7 +28,8 @@ const {
     getAcceptModel,
     seeTrip,
     addAcceptedTrip,
-    getAccepted
+    getAccepted,
+    driverCancel
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -71,5 +72,6 @@ router.post('/get-accepted', getAcceptModel);
 router.post('/see-trip', seeTrip);
 router.post('/pay-tabs', paytabs);
 router.post('/add-accepted', addAcceptedTrip);
-router.get('/get-accepted-driver/:id', getAcceptModel)
+router.get('/get-accepted-driver/:id', getAccepted);
+router.patch('/driver-cancelled', driverCancel);
 module.exports = router;
