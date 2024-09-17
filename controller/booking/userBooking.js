@@ -438,13 +438,15 @@ const driverCancel = async function (req, res) {
             return res.status(404).json({ message: "Trip Not Found" });
         }
         await deleteFromAcceptedModel(tripId);
-        
+        const tripData = await bookModel.findOne({ _id: tripId });
         // Check if the driverId matches the trip's driverId
         if (findtrip.driverId.toString() === driverId) {
             // Update the trip status to "pending"
             findtrip.status = "pending";
             await findtrip.save();  
-            
+            if(global.io){
+                global.io.emit("trip", tripData);
+            }
             return res.status(200).json({ message: "Trip Cancelled by Driver" });
         } else {
             return res.status(404).json({ message: "Driver for This Trip Not Found" });
