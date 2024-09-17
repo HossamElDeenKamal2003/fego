@@ -21,11 +21,6 @@ let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
     const trip = await acceptedModel.findOneAndDelete({ tripId: tripId });
-    
-    if (!trip) {
-        return { message: 'Trip not found' };
-    }
-    
     return { message: 'Document Deleted Successfully' };
 }
 
@@ -320,10 +315,7 @@ const acceptTrip = async (req, res) => {
         if (!offer) {
             return res.status(404).json({ message: 'Offer not found' });
         }
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
+        await deleteFromAcceptedModel(tripId);
 
         // Update booking details
         booking.status = 'accepted';
@@ -395,11 +387,7 @@ const cancelledTripbeforestart = async function(req, res) {
         }
 
         // Await deletion and check result
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
-
+        await deleteFromAcceptedModel(tripId);
         // Find and update the booking
         const booking = await bookModel.findOneAndUpdate({ _id: tripId }, { status: 'cancelled' }, { new: true });
 
@@ -449,10 +437,7 @@ const driverCancel = async function (req, res) {
         if (!findtrip) {
             return res.status(404).json({ message: "Trip Not Found" });
         }
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
+        await deleteFromAcceptedModel(tripId);
         
         // Check if the driverId matches the trip's driverId
         if (findtrip.driverId.toString() === driverId) {
@@ -481,11 +466,7 @@ const startTrip = async (req, res) => {
         if (!tripId || !driverId || !userId) {
             return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
-
+        await deleteFromAcceptedModel(tripId);
         // Fetch driver and booking details
         const [driverBook, booking, userData] = await Promise.all([
             detailTrip.findOne({ _id: driverId }),
@@ -554,11 +535,7 @@ const arriving = async (req, res) => {
         if (!tripId || !driverId) {
             return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
         }
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
-
+        await deleteFromAcceptedModel(tripId);
         // Fetch data in parallel
         const [driverBook, booking, userData] = await Promise.all([
             detailTrip.findOne({ _id: driverId }),
@@ -625,10 +602,7 @@ const canceledTrip = async (req, res) => {
         if (!tripId || !driverId || !userId) {
             return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
         }
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
+        await deleteFromAcceptedModel(tripId);
 
         // Fetch driver, booking, and user details
         const [driverBook, booking, userData] = await Promise.all([
@@ -703,11 +677,7 @@ const endTrip = async (req, res) => {
 
         const driverBook = await detailTrip.findOne({_id: driverId})
         const booking = await bookModel.findOne({ _id: tripId});
-        const deleteResult = await deleteFromAcceptedModel(tripId);
-        if (deleteResult.message === 'Trip not found') {
-            return res.status(404).json({ message: 'Trip not found in accepted model' });
-        }
-
+        await deleteFromAcceptedModel(tripId);
         if (!booking) {
             return res.status(404).json({ message: 'trip not found' });
         }
