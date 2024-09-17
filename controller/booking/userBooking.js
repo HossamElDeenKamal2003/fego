@@ -18,6 +18,18 @@ const User = require('../../model/regestration/userModel.js');
 const Driver = require('../../model/regestration/driverModel.js');
 const acceptedModel = require('../../model/booking/acceptedModel');
 let connectedClients = {};
+
+async function deleteFromAcceptedModel(tripId) {
+    const trip = await acceptedModel.findOneAndDelete({ tripId: tripId });
+    
+    if (!trip) {
+        return { message: 'Trip not found' };
+    }
+    
+    return { message: 'Document Deleted Successfully' };
+}
+
+
 const findDrivers = async (vehicleType, latitude, longitude) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
@@ -308,6 +320,10 @@ const acceptTrip = async (req, res) => {
         if (!offer) {
             return res.status(404).json({ message: 'Offer not found' });
         }
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
+        }
 
         // Update booking details
         booking.status = 'accepted';
@@ -371,11 +387,17 @@ const getAcceptModel = async function(req, res){
 }
 
 const cancelledTripbeforestart = async function(req, res) {
-    const { tripId, userId } = req.body; // Ensure driverId and userId are passed
+    const { tripId, userId } = req.body; // Ensure tripId and userId are passed
 
     try {
         if (!tripId || !userId) {
-            return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
+            return res.status(400).json({ message: 'Trip ID and User ID are required' });
+        }
+
+        // Await deletion and check result
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
         }
 
         // Find and update the booking
@@ -385,11 +407,8 @@ const cancelledTripbeforestart = async function(req, res) {
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        // Retrieve the driver and user information
-        const [userData] = await Promise.all([
-            // detailTrip.findOne({ _id: driverId }),
-            user.findOne({ _id: userId })
-        ]);
+        // Retrieve the user information
+        const userData = await user.findOne({ _id: userId });
 
         if (!userData) {
             return res.status(404).json({ message: 'User not found' });
@@ -402,18 +421,14 @@ const cancelledTripbeforestart = async function(req, res) {
         };
 
         // Get FCM tokens
-        // const driverFcmToken = driverBook.driverFCMToken;
         const userFcmToken = userData.userFCMToken;
 
         // Send notifications
-        // if (driverFcmToken) {
-        //     sendNotification(driverFcmToken, notificationMessage);
-        // }
         if (userFcmToken) {
-            sendNotification(userFcmToken, notificationMessage);
+            await sendNotification(userFcmToken, notificationMessage);
         }
 
-        // Emit cancellation event to the user and driver via WebSocket
+        // Emit cancellation event to the user via WebSocket
         if (global.io) {
             global.io.emit(`tripcancellBefore/${tripId}`, { booking, userData });
         }
@@ -426,12 +441,17 @@ const cancelledTripbeforestart = async function(req, res) {
     }
 };
 
+
 const driverCancel = async function (req, res) {
     const { tripId, driverId } = req.body;
     try {
         const findtrip = await bookModel.findOne({ _id: tripId });
         if (!findtrip) {
             return res.status(404).json({ message: "Trip Not Found" });
+        }
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
         }
         
         // Check if the driverId matches the trip's driverId
@@ -460,6 +480,10 @@ const startTrip = async (req, res) => {
         // Validate input
         if (!tripId || !driverId || !userId) {
             return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
+        }
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
         }
 
         // Fetch driver and booking details
@@ -530,6 +554,10 @@ const arriving = async (req, res) => {
         if (!tripId || !driverId) {
             return res.status(400).json({ message: 'Trip ID and Driver ID are required' });
         }
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
+        }
 
         // Fetch data in parallel
         const [driverBook, booking, userData] = await Promise.all([
@@ -596,6 +624,10 @@ const canceledTrip = async (req, res) => {
         // Validate input
         if (!tripId || !driverId || !userId) {
             return res.status(400).json({ message: 'Trip ID, Driver ID, and User ID are required' });
+        }
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
         }
 
         // Fetch driver, booking, and user details
@@ -671,6 +703,10 @@ const endTrip = async (req, res) => {
 
         const driverBook = await detailTrip.findOne({_id: driverId})
         const booking = await bookModel.findOne({ _id: tripId});
+        const deleteResult = await deleteFromAcceptedModel(tripId);
+        if (deleteResult.message === 'Trip not found') {
+            return res.status(404).json({ message: 'Trip not found in accepted model' });
+        }
 
         if (!booking) {
             return res.status(404).json({ message: 'trip not found' });
@@ -1081,20 +1117,25 @@ const addAcceptedTrip = async function(req, res){
     }
 }
 
-const getAccepted = async function(req, res){
+const getAccepted = async function(req, res) {
     const driverId = req.params.id;
-    try{
+    try {
+        // Find the document where driverId matches
         const driver = await acceptedModel.findOne({ driverId: driverId });
-        if(!driver){
-            res.status(404).json({ message: "Driver Not Found" })
+        if (!driver) {
+            return res.status(404).json({ message: "Driver Not Found" });
         }
-        res.status(200).json({ message: "Driver Found" });
-    }
-    catch(error){
+        const tripId = driver.tripId;
+        const updatedBooking = await bookModel.findOne({ _id: tripId });
+        if (!updatedBooking) {
+            return res.status(404).json({ message: "Trip Not Found" });
+        }
+        return res.status(200).json({ message: "Driver Found", updatedBooking });
+    } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 const userWallet = async function(req, res){
     const id = req.params.id;
@@ -1154,10 +1195,6 @@ const seeTrip = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 }
-
-
-
-
 
 module.exports = costHandler;
 
