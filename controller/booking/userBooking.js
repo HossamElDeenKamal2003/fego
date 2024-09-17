@@ -417,9 +417,9 @@ const cancelledTripbeforestart = async function(req, res) {
             await sendNotification(userFcmToken, notificationMessage);
         }
 
-        // Emit cancellation event to the user via WebSocket
+          // Emit the updated trip data if socket.io is initialized
         if (global.io) {
-            global.io.emit(`tripcancellBefore/${tripId}`, { booking, userData });
+            global.io.emit(`trip/${tripId}`, findtrip);
         }
 
         // Respond with the updated booking
@@ -446,7 +446,7 @@ const driverCancel = async function (req, res) {
             findtrip.status = "pending";
             await findtrip.save();  
             if(global.io){
-                global.io.emit("trip", tripData);
+                global.io.emit(`trip/${tripId}`, tripData);
             }
             return res.status(200).json({ message: "Trip Cancelled by Driver" });
         } else {
@@ -1159,7 +1159,7 @@ const seeTrip = async function(req, res) {
         }
 
         if (global.io) {
-            io.emit("see-driver", findTrip, findDriverDestination, findDriverData);
+            global.io.emit(`see-driver/${tripId}`, findTrip, findDriverDestination, findDriverData);
         }
 
         res.status(200).json({ findTrip, findDriverDestination, findDriverData }); // Added a response here to complete the request
