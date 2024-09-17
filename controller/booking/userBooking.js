@@ -17,6 +17,7 @@ const sendNotification = require('../../firebase.js');
 const User = require('../../model/regestration/userModel.js');
 const Driver = require('../../model/regestration/driverModel.js');
 const acceptedModel = require('../../model/booking/acceptedModel');
+const minValue = require('../../model/booking/minCharge.js');
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
@@ -1168,6 +1169,55 @@ const seeTrip = async function(req, res) {
     }
 }
 
+const addVal = async function(req, res) {
+    const { value } = req.body;
+
+    // Check if the value is provided
+    if (!value) {
+        return res.status(400).json({ message: 'Value is required' });
+    }
+
+    try {
+        // Create and save new value
+        const newVal = new minValue({ value });
+        await newVal.save();
+
+        // Respond with success message
+        res.status(201).json({ message: 'Value added successfully', data: newVal });
+    } catch (error) {
+        console.error(error);
+        // Send error response
+        res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    }
+};
+
+const update_min_val = async function(req, res){
+    const { minval } = req.body;
+    try{
+        const updateValue = await minValue.findByIdAndUpdate(
+            { _id: "66e983c6b0da07598db41460" },
+            { value: minval },
+            { new: true }
+        );
+        res.status(200).json({ message: 'Value updated successfully', data: updateValue });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const get_min_value = async function(req, res){
+    try{
+        const value = await minValue.find();
+        res.status(200).json({ data: value });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = costHandler;
 
 
@@ -1207,5 +1257,8 @@ module.exports = {
     seeTrip,
     addAcceptedTrip,
     getAccepted,
-    driverCancel
+    driverCancel,
+    addVal,
+    update_min_val,
+    get_min_value
 };

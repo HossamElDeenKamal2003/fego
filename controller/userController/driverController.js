@@ -266,33 +266,34 @@ const driverLocation = async (req, res) => {
 
 const handleToken = async function(req, res) {
     const id = req.params.id;
-    const { driverFCMToken } = req.body;
+    const { driverFCMToken, check } = req.body;
 
     try {
-        if(!driverFCMToken){
-            res.status(400).json({ message: "driverFCMToken is required" });
+        if(check === "true"){
+            if(!driverFCMToken){
+                res.status(400).json({ message: "driverFCMToken is required" });
+            }
+            // Correct usage of findByIdAndUpdate without wrapping the id in an object
+            const found = await Driver.findOneAndUpdate(
+                {_id: id},
+                { driverFCMToken: driverFCMToken },
+                { new: true }
+            );
+            const found2 = await driverFind.findOneAndUpdate(
+                {driverId: id},
+                { driverFCMToken: driverFCMToken },
+                { new: true }
+            );
+            
+            if (!found) {
+                return res.status(404).json({ message: "driver1 not found" });
+            }
+            if (!found2) {
+                return res.status(404).json({ message: "driver2 not found" });
+            }
+            res.status(200).json({ message: "Token sent successfully", driverFCMToken });
         }
-        // Correct usage of findByIdAndUpdate without wrapping the id in an object
-        const found = await Driver.findOneAndUpdate(
-            {_id: id},
-            { driverFCMToken: driverFCMToken },
-            { new: true }
-        );
-        const found2 = await driverFind.findOneAndUpdate(
-            {driverId: id},
-            { driverFCMToken: driverFCMToken },
-            { new: true }
-        );
         
-        if (!found) {
-            return res.status(404).json({ message: "driver1 not found" });
-        }
-        if (!found2) {
-            return res.status(404).json({ message: "driver2 not found" });
-        }
-
-
-        res.status(200).json({ message: "Token sent successfully", driverFCMToken });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
