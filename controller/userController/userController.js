@@ -199,13 +199,14 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ message: 'User not found' });
         }
+
         // if(user.block === true){
             const valid = bcrypt.compareSync(password, user.password);
             if (!valid) {
                 return res.status(401).json({ message: 'Incorrect password' });
             }
 
-            const token = jwt.sign({ id: user._id, username: user.username }, "5739dc5e96c68d2200d196390a0dc53e73013a4ecc6fb144ff1368e570c0126d4afda02965f5d67975f2a01dc1bd9abb77a5284f230468a5ea24155aee8ae1d4", { expiresIn: '1h' });
+            //const token = jwt.sign({ id: user._id, username: user.username }, "5739dc5e96c68d2200d196390a0dc53e73013a4ecc6fb144ff1368e570c0126d4afda02965f5d67975f2a01dc1bd9abb77a5284f230468a5ea24155aee8ae1d4", { expiresIn: '1h' });
 
             const userData = {
                 id: user._id,
@@ -214,15 +215,15 @@ const login = async (req, res) => {
                 phoneNumber: user.phoneNumber
             };
 
-            res.status(200).json({ message: 'Login successful', token, user: userData });
-            //}
-            res.status(401).json({message: "Unauthorized to login"})
-        
+            return res.status(200).json({ message: 'Login successful', user: userData });
+        //}
+
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
+
 
 // Update password function
 const updatePassword = async (req, res) => {
