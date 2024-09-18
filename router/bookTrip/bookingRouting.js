@@ -34,7 +34,8 @@ const {
     update_min_val,
     get_min_value,
     getDriverhistory,
-    getTripbyId
+    getTripbyId,
+    addComment
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -83,5 +84,6 @@ router.post('/add-val', addVal);
 router.patch('/update_min_val', update_min_val);
 router.get('/get_min_value', get_min_value);
 router.get('/get-driver-history/:id', getDriverhistory);
-router.get('/getTripbyId/:id', getTripbyId)
+router.get('/getTripbyId/:id', getTripbyId);
+router.patch('/addComment/:id', addComment);
 module.exports = router;

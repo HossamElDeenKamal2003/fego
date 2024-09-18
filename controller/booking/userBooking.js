@@ -153,7 +153,8 @@ const bookTrip = async (req, res) => {
                 coordinates: [destlongtitude, destlatitude]
             },
             cost: cost,
-            status: 'pending' // Initial status
+            status: 'pending', // Initial status
+            comment: ""
         });
 
         const savedBooking = await newBooking.save();
@@ -179,7 +180,8 @@ const bookTrip = async (req, res) => {
                 coordinates: [destlongtitude, destlatitude]
             },
             cost: cost,
-            status: 'pending'
+            status: 'pending',
+            comment: ""
         });
         await pending.save();
 
@@ -1254,6 +1256,26 @@ const getTripbyId = async function(req, res) {
     }
 }
 
+
+const addComment = async function(req, res){
+    const tripId = req.params.id;
+    const { comment } = req.body;
+    try{
+        const addComment = await bookModel.findByIdAndUpdate(
+            { _id: tripId },
+            { comment: comment },
+            { new: true }
+        );
+        if(!addComment){
+            res.status(400).json({ message: "Error When Adding Comment" });
+        }
+        res.status(200).json({ trip: addComment });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 module.exports = costHandler;
 
 
@@ -1298,5 +1320,6 @@ module.exports = {
     update_min_val,
     get_min_value,
     getDriverhistory,
-    getTripbyId
+    getTripbyId,
+    addComment
 };
