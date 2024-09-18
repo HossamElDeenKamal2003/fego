@@ -419,7 +419,7 @@ const cancelledTripbeforestart = async function(req, res) {
 
           // Emit the updated trip data if socket.io is initialized
         if (global.io) {
-            global.io.emit(`trip/${tripId}`, findtrip);
+            global.io.emit(`trip/${tripId}`, booking);
         }
 
         // Respond with the updated booking
