@@ -1169,7 +1169,7 @@ const seeTrip = async function(req, res) {
         }
 
         if (global.io) {
-            global.io.emit(`see-driver/${tripId}`, findTrip, findDriverDestination, findDriverData);
+            global.io.emit(`see-driver/${tripId}`, {driverData: findDriverData});
         }
 
         res.status(200).json({ findTrip, findDriverDestination, findDriverData }); // Added a response here to complete the request
