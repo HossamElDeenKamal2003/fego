@@ -1099,11 +1099,19 @@ const getAccepted = async function(req, res) {
             return res.status(404).json({ message: "Driver Not Found" });
         }
         const tripId = driver.tripId;
+        
         const updatedBooking = await bookModel.findOne({ _id: tripId });
         if (!updatedBooking) {
             return res.status(404).json({ message: "Trip Not Found" });
         }
-        return res.status(200).json({ message: "Driver Found", updatedBooking });
+        const userId = updatedBooking.userId;
+        const [driverBook, userData, driverLocation] = await Promise.all([
+            detailTrip.findOne({ _id: driverId }),
+            //bookModel.findOne({ _id: tripId }),
+            user.findOne({ _id: userId }),
+            driverDestination.findOne({ driverId: driverId })
+        ]);
+        return res.status(200).json({ message: "Driver Found", updatedBooking,driverBook, driverLocation, userData});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error.message });
@@ -1218,6 +1226,34 @@ const get_min_value = async function(req, res){
     }
 }
 
+const getDriverhistory = async function(req, res){
+    const driverId = req.params.id;
+    try {
+        const history = await bookModel.find({ driverId: driverId });
+        if(history.length === 0) {
+            return res.status(404).json({ message: "No History For This Driver" });
+        }
+        res.status(200).json({ history: history });
+    } catch(error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getTripbyId = async function(req, res) {
+    const tripId = req.params.id;
+    try {
+        const tripData = await bookModel.findOne({ _id: tripId });
+        if (!tripData) {
+            return res.status(404).json({ message: "No Trip Match" });  // Add return here
+        }
+        res.status(200).json({ trip: tripData });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = costHandler;
 
 
@@ -1260,5 +1296,7 @@ module.exports = {
     driverCancel,
     addVal,
     update_min_val,
-    get_min_value
+    get_min_value,
+    getDriverhistory,
+    getTripbyId
 };
