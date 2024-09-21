@@ -870,7 +870,7 @@ const userRate = async function(req, res) {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: "Internal Server Error" });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -1334,6 +1334,8 @@ const handleArrivingTime = async function(req, res){
         res.status(500).json({ message: error.message });
     }
 }
+
+
 
 module.exports = costHandler;
 

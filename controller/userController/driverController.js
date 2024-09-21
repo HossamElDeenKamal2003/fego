@@ -271,9 +271,7 @@ const handleToken = async function(req, res) {
     try {
         // Ensure 'check' is passed and it's the correct type
         if (check !== "true") {
-            return res.status(400).json({ message: "'check' must be true" });
-        }
-
+            
         // Validate that driverFCMToken is provided
         if (!driverFCMToken) {
             return res.status(400).json({ message: "driverFCMToken is required" });
@@ -305,6 +303,8 @@ const handleToken = async function(req, res) {
         console.log(`id : ${id}, driverFCMToken: ${driverFCMToken}, check: ${check}`);
         // Successfully updated both collections
         res.status(200).json({ message: "Token updated successfully", driverFCMToken });
+        }
+
 
     } catch (error) {
         // Log the error and send a 500 response if an unexpected error occurs
