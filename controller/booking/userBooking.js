@@ -26,9 +26,11 @@ async function deleteFromAcceptedModel(tripId) {
 }
 
 
-const findDrivers = async (vehicleType, latitude, longitude) => {
+const findDrivers = async (req, res) => {
+    const { vehicleType, latitude, longitude } = req.body; // Assuming you receive these from the request body
+
     if (!vehicleType || latitude === undefined || longitude === undefined) {
-        throw new Error('Vehicle type, latitude, and longitude are required');
+        return res.status(400).json({ message: 'Vehicle type, latitude, and longitude are required' });
     }
 
     try {
@@ -52,7 +54,8 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
         ]);
 
         if (drivers.length === 0) {
-            throw new Error('No drivers available in your area');
+            // If no drivers found, return 200 status with a message
+            return res.status(200).json({ message: 'No drivers available in your area' });
         }
 
         // Find detailed information for each nearby driver and include the distance
@@ -67,14 +70,13 @@ const findDrivers = async (vehicleType, latitude, longitude) => {
             })
         );
 
-        return driverDetails;
+        // Return the driver details in response
+        return res.status(200).json({ drivers: driverDetails });
 
     } catch (error) {
-        console.error('Error finding drivers:', error);
-        throw error;
+        return res.status(500).json({ message: 'Error finding drivers', error: error.message });
     }
 };
-
 
 const updateDistance = async function(req, res) {
     const { maxDistance } = req.body;
@@ -879,7 +881,7 @@ const addPrice = async function(req, res) {
     
     try {
         // Check for missing fields
-        if (!country || !priceCar || !motorocycle || !priceVan) {
+        if (!country || !priceCar || !motorocycle || !priceVan, !!penfits) {
             return res.status(400).json({ message: "All Fields Required" });
         }
 
@@ -888,6 +890,7 @@ const addPrice = async function(req, res) {
             priceCar,
             motorocycle,
             priceVan,
+            penfits
         });
 
         await newPrice.save();
@@ -897,6 +900,21 @@ const addPrice = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
+const updatePenfits = async function(req, res){
+    const{ country, penfits } = req.body;
+    try{
+        const updatePenfits = await PricesModel.findOneAndUpdate(
+            { country: country },
+            { penfits: penfits },
+            { new: true }
+        )
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
 const getPrice = async function(req, res){
     try{
@@ -1178,7 +1196,7 @@ const userWallet = async function(req, res) {
         // Update the user's wallet by setting it to 'value'
         const updatedUserWallet = await User.findOneAndUpdate(
             { _id: id },
-            { wallet: value }, // Update with the new value
+            { wallet: userFound.wallet + value }, // Update with the new value
             { new: true } // Return the updated document
         );
 
@@ -1239,7 +1257,7 @@ const driverWallet = async function(req, res) {
         // Update the driver's wallet with the new value
         const updatedDriverWallet = await Driver.findOneAndUpdate(
             { _id: id },
-            { wallet: value }, // Set the driver's wallet to 'value'
+            { wallet: driverFound + value }, // Set the driver's wallet to 'value'
             { new: true } // Return the updated document
         );
 
@@ -1280,7 +1298,7 @@ const getdriverWallet = async function(req, res){
     try{
         const result = await Driver.findOne({ _id: id });
         if(!result){
-            res.status(404).json({ message: "User Not Found" });
+            res.status(404).json({ message: "Driver Not Found" });
         }
         const wallet = result.wallet;
         res.status(200).json({wallet});
