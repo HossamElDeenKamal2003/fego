@@ -92,6 +92,6 @@ router.get('/getTripbyId/:id', getTripbyId);
 router.patch('/addComment/:id', addComment);
 router.patch('/user-rate', userRate);
 router.patch('/update-arriving-time', handleArrivingTime);
-router.patch('/update-user-wallet/:id', driverWallet);
-router.get('/get-user-wallet/:id', getdriverWallet);
+router.patch('/update-driver-wallet/:id', driverWallet);
+router.get('/get-driver-wallet/:id', getdriverWallet);
 module.exports = router;
