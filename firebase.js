@@ -21,14 +21,21 @@ const sendNotification = async (token, message, retries = 3) => {
     } catch (error) {
         console.error('Error sending notification:', error);
 
-        // Handle invalid token error (token is no longer valid)
-        if (error.errorInfo.code === 'messaging/registration-token-not-registered') {
-            console.log(`The token ${token} is invalid. Skipping notification without error.`);
-            // Do not throw error, silently skip the invalid token
+        // Handle invalid FCM token or invalid argument errors gracefully
+        if (error.errorInfo && error.errorInfo.code === 'messaging/invalid-argument') {
+            console.log(`The token ${token} is invalid or not a valid FCM registration token.`);
+            // Do not throw an error, silently skip the invalid token
+            return { success: false, message: 'Invalid FCM registration token' };
+        }
+
+        // Handle token not registered
+        if (error.errorInfo && error.errorInfo.code === 'messaging/registration-token-not-registered') {
+            console.log(`The token ${token} is no longer valid.`);
+            // Do not throw an error, silently skip the invalid token
             return { success: false, message: 'Token is no longer valid' };
         }
 
-        // Retry if it's a 503 (Service Unavailable) error
+        // Retry for internal server errors
         if (error.code === 'messaging/internal-error' && retries > 0) {
             console.log(`Retrying... (${3 - retries + 1})`);
 
@@ -39,7 +46,7 @@ const sendNotification = async (token, message, retries = 3) => {
             return sendNotification(token, message, retries - 1);
         }
 
-        // If retries are exhausted or the error is not recoverable, throw the error
+        // For all other errors, throw the error
         throw error;
     }
 };
