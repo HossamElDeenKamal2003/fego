@@ -26,11 +26,9 @@ async function deleteFromAcceptedModel(tripId) {
 }
 
 
-const findDrivers = async (req, res) => {
-    const { vehicleType, latitude, longitude } = req.body; // Assuming you receive these from the request body
-
+const findDrivers = async (vehicleType, latitude, longitude) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
-        return res.status(400).json({ message: 'Vehicle type, latitude, and longitude are required' });
+        throw new Error('Vehicle type, latitude, and longitude are required');
     }
 
     try {
@@ -54,8 +52,7 @@ const findDrivers = async (req, res) => {
         ]);
 
         if (drivers.length === 0) {
-            // If no drivers found, return 200 status with a message
-            return res.status(200).json({ message: 'No drivers available in your area' });
+            res.status(200).json({ message: "No Drivers Around You" });
         }
 
         // Find detailed information for each nearby driver and include the distance
@@ -70,13 +67,14 @@ const findDrivers = async (req, res) => {
             })
         );
 
-        // Return the driver details in response
-        return res.status(200).json({ drivers: driverDetails });
+        return driverDetails;
 
     } catch (error) {
-        return res.status(500).json({ message: 'Error finding drivers', error: error.message });
+        console.error('Error finding drivers:', error);
+        throw error;
     }
 };
+
 
 const updateDistance = async function(req, res) {
     const { maxDistance } = req.body;
@@ -907,7 +905,7 @@ const updatePenfits = async function(req, res){
         const updatePenfits = await PricesModel.findOneAndUpdate(
             { country: country },
             { penfits: penfits },
-            { new: true }
+            { new: true}
         )
     }
     catch(error){
