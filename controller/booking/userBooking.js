@@ -1158,27 +1158,55 @@ const getAccepted = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
-
-const userWallet = async function(req, res){
+const userWallet = async function(req, res) {
     const id = req.params.id;
-    const {value} = req.body;
-    try{
+    const { value, driverId } = req.body;
+
+    try {
+        // Find the user by their ID
         const userFound = await User.findOne({ _id: id });
-        if(!userFound){
+        if (!userFound) {
             return res.status(404).json({ message: "User Not Found" });
         }
-        const wallet = await User.findOneAndUpdate(
+
+        // Find the driver by their ID
+        const driverFound = await Driver.findOne({ _id: driverId });
+        if (!driverFound) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+
+        // Update the user's wallet by setting it to 'value'
+        const updatedUserWallet = await User.findOneAndUpdate(
             { _id: id },
-            { wallet: value },
-            {new: true}
+            { wallet: value }, // Update with the new value
+            { new: true } // Return the updated document
         );
-        res.status(200).json(wallet);
-    }
-    catch(error){
+
+        // Calculate the new driver's wallet by subtracting 'value'
+        const updatedDriverWallet = await Driver.findOneAndUpdate(
+            { _id: driverId },
+            { wallet: driverFound.wallet - value }, // Subtract the 'value' from the driver's wallet
+            { new: true } // Return the updated document
+        );
+
+        // If for any reason the driver wallet update fails
+        if (!updatedDriverWallet) {
+            return res.status(500).json({ message: "Failed to update driver wallet" });
+        }
+
+        // Respond with the updated user and driver wallet info
+        res.status(200).json({
+            message: "Wallets updated successfully",
+            userWallet: updatedUserWallet.wallet,
+            driverWallet: updatedDriverWallet.wallet
+        });
+
+    } catch (error) {
+        // Log and return any server error
         console.log(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getUserWallet = async function(req, res){
     const id = req.params.id;
@@ -1195,6 +1223,75 @@ const getUserWallet = async function(req, res){
         res.status(500).json({ message: error.message });
     }
 }
+
+
+const driverWallet = async function(req, res) {
+    const id = req.params.id;
+    const { value, userId } = req.body;
+
+    try {
+        // Find the driver by their ID
+        const driverFound = await Driver.findOne({ _id: id });
+        if (!driverFound) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+
+        // Update the driver's wallet with the new value
+        const updatedDriverWallet = await Driver.findOneAndUpdate(
+            { _id: id },
+            { wallet: value }, // Set the driver's wallet to 'value'
+            { new: true } // Return the updated document
+        );
+
+        // Find the user by their ID to subtract the value from their wallet
+        const userFound = await User.findOne({ _id: userId });
+        if (!userFound) {
+            return res.status(404).json({ message: "User Not Found" });
+        }
+
+        // Update the user's wallet by subtracting 'value'
+        const updatedUserWallet = await User.findOneAndUpdate(
+            { _id: userId },
+            { wallet: userFound.wallet - value }, // Subtract the value from user's wallet
+            { new: true } // Return the updated document
+        );
+
+        // If for any reason the update for user fails
+        if (!updatedUserWallet) {
+            return res.status(500).json({ message: "Failed to update user wallet" });
+        }
+
+        // Respond with the updated driver and user wallet information
+        res.status(200).json({
+            message: "Wallets updated successfully",
+            driverWallet: updatedDriverWallet.wallet,
+            userWallet: updatedUserWallet.wallet
+        });
+
+    } catch (error) {
+        // Log the error and send a response
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+const getdriverWallet = async function(req, res){
+    const id = req.params.id;
+    try{
+        const result = await Driver.findOne({ _id: id });
+        if(!result){
+            res.status(404).json({ message: "User Not Found" });
+        }
+        const wallet = result.wallet;
+        res.status(200).json({wallet});
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 
 const seeTrip = async function(req, res) {
     const { tripId, driverId } = req.body;
@@ -1384,5 +1481,7 @@ module.exports = {
     getTripbyId,
     addComment,
     userRate,
-    handleArrivingTime
+    handleArrivingTime,
+    driverWallet,
+    getdriverWallet
 };
