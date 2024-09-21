@@ -1,13 +1,12 @@
-// models/userModel.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-    profile_image:{
+    profile_image: {
         type: String,
         required: true
     },
-    userFCMToken:{
+    userFCMToken: {
         type: String,
         default: null,
     },
@@ -30,7 +29,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    block:{
+    block: {
         type: Boolean,
         default: true
     },
@@ -48,6 +47,15 @@ const userSchema = new mongoose.Schema({
     },
     wallet: {
         type: Number,
+        default: 0
+    },
+    rate: {            // Add this field
+        type: Number,
+        default: 0
+    },
+    totalRatings: {     // Add this field
+        type: Number,
+        default: 0
     }
 });
 

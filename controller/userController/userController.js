@@ -38,6 +38,7 @@ const signUp = async (req, res) => {
     const { username, email, phoneNumber, password, profile_image, userFCMToken } = req.body;
 
     if (!username || !email || !phoneNumber || !password) {
+        console.log(req.body);
         return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -61,6 +62,8 @@ const signUp = async (req, res) => {
             block: true,
             alerts: 0,
             wallet: 0,
+            rate: 0,
+            totalRatings: 0,
             password: bcrypt.hashSync(req.body.password, 10)
         });
         await newUser.save();
@@ -92,7 +95,9 @@ const signUp = async (req, res) => {
             block: newUser.block,
             alerts: newUser.alerts,
             userFCMToken,
-            phoneNumber: newUser.phoneNumber
+            phoneNumber: newUser.phoneNumber,
+            rate: 0,
+            totalRatings: 0,
         };
         res.status(201).json({ message: 'User created successfully', user: userData });
     } catch (error) {

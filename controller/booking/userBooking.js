@@ -123,7 +123,7 @@ const bookTrip = async (req, res) => {
     const {
         id, distance, username, driverId, destination, latitude, longitude,
         destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
-        locationName, uniqueId
+        locationName, uniqueId, comment, arrivingTime
     } = req.body;
 
     try {
@@ -154,7 +154,8 @@ const bookTrip = async (req, res) => {
             },
             cost: cost,
             status: 'pending', // Initial status
-            comment: ""
+            comment,
+            arrivingTime
         });
 
         const savedBooking = await newBooking.save();
@@ -181,7 +182,8 @@ const bookTrip = async (req, res) => {
             },
             cost: cost,
             status: 'pending',
-            comment: ""
+            comment: "",
+            arrivingTime
         });
         await pending.save();
 
@@ -432,7 +434,6 @@ const cancelledTripbeforestart = async function(req, res) {
     }
 };
 
-
 const driverCancel = async function (req, res) {
     const { tripId, driverId } = req.body;
     try {
@@ -459,7 +460,6 @@ const driverCancel = async function (req, res) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 
 // Start a trip
@@ -795,8 +795,6 @@ const driverHistory = async function(req, res) {
     }
 }
 
-
-
 const driverRate = async function(req, res) {
     const { driverId, rate } = req.body;
 
@@ -832,6 +830,47 @@ const driverRate = async function(req, res) {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
+    }
+};
+
+const userRate = async function(req, res) {
+    const { userId, rate } = req.body;
+
+    if (!userId || rate === undefined) {
+        return res.status(400).json({ message: "userId and rate are required." });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({ message: "User Not Found" });
+        }
+
+        // Calculate the new average rating
+        const oldRate = user.rate || 0;
+        const totalRatings = user.totalRatings || 0;
+        const newTotalRatings = totalRatings + 1;
+        const newRate = ((oldRate * totalRatings) + rate) / newTotalRatings;
+
+        // Update the user's rating and totalRatings
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { 
+                rate: newRate,
+                totalRatings: newTotalRatings
+            },
+            { new: true } // returns the updated document
+        );
+
+        res.status(200).json({
+            message: "Rate Updated Successfully",
+            rate: updatedUser.rate,
+            totalRatings: updatedUser.totalRatings
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
@@ -1186,7 +1225,6 @@ const addVal = async function(req, res) {
     if (!value) {
         return res.status(400).json({ message: 'Value is required' });
     }
-
     try {
         // Create and save new value
         const newVal = new minValue({ value });
@@ -1276,6 +1314,27 @@ const addComment = async function(req, res){
         res.status(500).json({ message: error.message });
     }
 }
+
+const handleArrivingTime = async function(req, res){
+    const { tripId, time } = req.body;
+    try{
+        const updateArrivingTime = await bookModel.findByIdAndUpdate(
+            { _id: tripId },
+            { arrivingTime: time },
+            { new: true }
+        );
+        if(!updateArrivingTime){
+            res.status(400).json({ message: "Error When Updating Arriving Time" });
+        }
+        res.status(200).json({ message: "Arriving Trip Upadted Successfully" });
+
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = costHandler;
 
 
@@ -1321,5 +1380,7 @@ module.exports = {
     get_min_value,
     getDriverhistory,
     getTripbyId,
-    addComment
+    addComment,
+    userRate,
+    handleArrivingTime
 };

@@ -70,11 +70,6 @@ const driverSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    
-    wallet:{
-        type: Number,
-    },
-
     rate:{
         type: Number,
         default: 0,
@@ -82,7 +77,11 @@ const driverSchema = new mongoose.Schema({
     totalRatings:{
         type: Number,
         default: 0,
-    }
+    },
+    wallet: {
+        type: Number,
+        default: 0
+    },
 });
 
 

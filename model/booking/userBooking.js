@@ -92,6 +92,22 @@ const bookingSchema = new mongoose.Schema({
     date: {
         type: String,
         default: dateHandle()
+    },
+    comment: {
+        type: String,
+        default: ""
+    },
+    totalRatings: {
+        type: Number,
+        default: 0,
+    },
+    rate:{
+        type: Number,
+        default: 0,
+    },
+    arrivingTime: {
+        type: String,
+        default: null
     }
 });
 
