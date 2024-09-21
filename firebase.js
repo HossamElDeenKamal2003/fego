@@ -11,6 +11,7 @@ const sendNotification = async (token, message, retries = 3) => {
             title: message.title,
             body: message.body,
         },
+        data: message.data || {}, // Optional custom data
         token: token,
     };
 
@@ -21,18 +22,17 @@ const sendNotification = async (token, message, retries = 3) => {
     } catch (error) {
         console.error('Error sending notification:', error);
 
-        // Check if the error is a 503 (Service Unavailable)
+        // Retry on internal error
         if (error.code === 'messaging/internal-error' && retries > 0) {
             console.log(`Retrying... (${3 - retries + 1})`);
 
-            // Wait for a short delay before retrying
+            // Wait before retrying
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Retry sending the notification
             return sendNotification(token, message, retries - 1);
         }
 
-        // If retries are exhausted or it's not a 503 error, throw the error
+        // Re-throw the error if retries are exhausted or if it's not a recoverable error
         throw error;
     }
 };
