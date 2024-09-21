@@ -302,7 +302,7 @@ const handleToken = async function(req, res) {
         if (!found2) {
             return res.status(404).json({ message: "Driver not found in 'driverFind' collection" });
         }
-
+        console.log(`id : ${id}, driverFCMToken: ${driverFCMToken}, check: ${check}`);
         // Successfully updated both collections
         res.status(200).json({ message: "Token updated successfully", driverFCMToken });
 
