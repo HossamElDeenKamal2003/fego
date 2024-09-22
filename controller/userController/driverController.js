@@ -264,52 +264,55 @@ const driverLocation = async (req, res) => {
     }
 };
 
-const handleToken = async function(req, res) {
+const handleToken = async function (req, res) {
     const id = req.params.id;
     const { driverFCMToken, check } = req.body;
 
     try {
         // Ensure 'check' is passed and it's the correct type
-        if (check !== "true") {
-            
-        // Validate that driverFCMToken is provided
-        if (!driverFCMToken) {
-            return res.status(400).json({ message: "driverFCMToken is required" });
+        if (check === "true" || check === true) {
+
+            // Validate that driverFCMToken is provided
+            if (!driverFCMToken) {
+                return res.status(400).json({ message: "driverFCMToken is required" });
+            }
+
+            // Update the driver in the 'Driver' collection
+            const found = await Driver.findOneAndUpdate(
+                { _id: id },
+                { driverFCMToken: driverFCMToken },
+                { new: true }
+            );
+
+            // If the driver isn't found in the 'Driver' collection
+            if (!found) {
+                return res.status(404).json({ message: "Driver not found in 'Driver' collection" });
+            }
+
+            // Update the driver in the 'driverFind' collection
+            const found2 = await driverFind.findOneAndUpdate(
+                { driverId: id },
+                { driverFCMToken: driverFCMToken },
+                { new: true }
+            );
+
+            // If the driver isn't found in the 'driverFind' collection
+            if (!found2) {
+                return res.status(404).json({ message: "Driver not found in 'driverFind' collection" });
+            }
+
+            console.log(`id : ${id}, driverFCMToken: ${driverFCMToken}, check: ${check}`);
+            // Successfully updated both collections
+            return res.status(200).json({ message: "Token updated successfully", driverFCMToken });
         }
 
-        // Update the driver in the 'Driver' collection
-        const found = await Driver.findOneAndUpdate(
-            { _id: id },
-            { driverFCMToken: driverFCMToken },
-            { new: true }
-        );
-
-        // If the driver isn't found in the 'Driver' collection
-        if (!found) {
-            return res.status(404).json({ message: "Driver not found in 'Driver' collection" });
-        }
-
-        // Update the driver in the 'driverFind' collection
-        const found2 = await driverFind.findOneAndUpdate(
-            { driverId: id },
-            { driverFCMToken: driverFCMToken },
-            { new: true }
-        );
-
-        // If the driver isn't found in the 'driverFind' collection
-        if (!found2) {
-            return res.status(404).json({ message: "Driver not found in 'driverFind' collection" });
-        }
-        console.log(`id : ${id}, driverFCMToken: ${driverFCMToken}, check: ${check}`);
-        // Successfully updated both collections
-        res.status(200).json({ message: "Token updated successfully", driverFCMToken });
-        }
-
+        // Send response if 'check' is not true
+        return res.status(200).json({ message: "check not true" });
 
     } catch (error) {
         // Log the error and send a 500 response if an unexpected error occurs
         console.error(error);
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 

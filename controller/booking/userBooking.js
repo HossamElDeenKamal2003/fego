@@ -875,14 +875,15 @@ const userRate = async function(req, res) {
 };
 
 const addPrice = async function(req, res) {
-    const { country, priceCar, motorocycle, priceVan } = req.body;
-    
+    const { country, priceCar, motorocycle, priceVan, penfits } = req.body;
+
     try {
         // Check for missing fields
-        if (!country || !priceCar || !motorocycle || !priceVan, !!penfits) {
-            return res.status(400).json({ message: "All Fields Required" });
+        if (!country || !priceCar || !motorocycle || !priceVan || !penfits) {
+            return res.status(400).json({ message: "All Fields are Required" });
         }
 
+        // Create a new price entry
         const newPrice = new PricesModel({
             country,
             priceCar,
@@ -891,28 +892,16 @@ const addPrice = async function(req, res) {
             penfits
         });
 
+        // Save the new price in the database
         await newPrice.save();
+        
+        // Return success response with the newly created price entry
         res.status(201).json({ message: "Price Added Successfully", newPrice });
     } catch (error) {
-        console.error(error); // Use console.error for errors
+        console.error(error); // Use console.error for logging errors
         res.status(500).json({ message: error.message });
     }
 };
-
-const updatePenfits = async function(req, res){
-    const{ country, penfits } = req.body;
-    try{
-        const updatePenfits = await PricesModel.findOneAndUpdate(
-            { country: country },
-            { penfits: penfits },
-            { new: true}
-        )
-    }
-    catch(error){
-        console.log(error);
-        res.status(500).json({ message: error.message });
-    }
-}
 
 const getPrice = async function(req, res){
     try{
@@ -926,7 +915,7 @@ const getPrice = async function(req, res){
 }
 
 const updatePrice = async function(req, res) {
-    const { country, priceCar, motorocycle, priceVan } = req.body;
+    const { country, priceCar, motorocycle, priceVan, penfits } = req.body;
     
     try {
         if (!country) {
@@ -935,7 +924,7 @@ const updatePrice = async function(req, res) {
 
         const updatedPrice = await PricesModel.findOneAndUpdate(
             { country: country },
-            { priceCar, motorocycle, priceVan },
+            { priceCar, motorocycle, priceVan, penfits },
             { new: true }
         );
 
