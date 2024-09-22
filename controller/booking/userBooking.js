@@ -1437,6 +1437,19 @@ const handleArrivingTime = async function(req, res){
     }
 }
 
+const getTripDriver = async function(req, res) {
+    const { id } = req.params;  // Corrected destructuring
+    try {
+        const trips = await bookModel.find({ driverId: id });
+        if(trips.length === 0){
+            return res.status(200).json([]);
+        }
+        res.status(200).json({ trips: trips });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 module.exports = costHandler;
@@ -1488,5 +1501,6 @@ module.exports = {
     userRate,
     handleArrivingTime,
     driverWallet,
-    getdriverWallet
+    getdriverWallet,
+    getTripDriver
 };
