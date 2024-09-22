@@ -17,6 +17,9 @@ const pricesSchema = new mongoose.Schema({
     priceVan: {
         type: Number,
         required: true
+    },
+    penfits: {
+        type: Number,
     }
 });
 
