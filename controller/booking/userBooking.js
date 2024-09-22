@@ -26,7 +26,7 @@ async function deleteFromAcceptedModel(tripId) {
 }
 
 
-const findDrivers = async (vehicleType, latitude, longitude) => {
+const findDrivers = async (vehicleType, latitude, longitude, res) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
     }
