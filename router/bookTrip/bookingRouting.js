@@ -68,7 +68,7 @@ router.patch('/cancelled-trip', canceledTrip);
 router.patch('/cancelled_before_start', cancelledTripbeforestart);
 router.put('/add-offer', addOffer);
 router.put('/get-offer', getOffer);
-router.get('/get-trips', allTrips);
+//router.get('/get-trips', allTrips);
 router.get('/driver-history/:id', driverHistory);
 router.post('/add-price', addPrice)
 router.patch('/updatePrice', updatePrice);
