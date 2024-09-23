@@ -10,7 +10,7 @@ io.on('connection', (socket) => {
     // Handle user joining a room
     socket.on('user-joined', (obj) => {
     socket.username = obj.username;
-    socket.join(obj.username); // Join the room using the username
+    socket.join(obj.username);
     console.log('User joined room:', socket.username);
     });
 
@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
     });
 
     // Handle chat messages
-    socket.on('chat', async (obj) => {
+    socket.on(`chat/conversationId`, async (obj) => {
     try {
         // Create a new message in the database
         const message = new Message({
@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
         await message.save();
 
         // Send message to the intended recipient
-        io.emit('chat', { 
+        io.emit(`chat/conversationId`, { 
         msg: obj.msg, 
         from: obj.from,
         media: obj.media,

@@ -24,7 +24,7 @@ const socketHandler = (io) => {
                 );
                 const notificationMessage = {
                     title: 'New Trip Available',
-                    body: `A new trip to is available for you.`,
+                    body: `An Offer For You From Driver.`,
                 };
                 
                 // Send the FCM notification to the driver

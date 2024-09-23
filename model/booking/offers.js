@@ -12,6 +12,12 @@ const offersSchema = new mongoose.Schema({
     offer: {
         type: Number,
         required: true,
+    },
+    time: {
+        type: String
+    },
+    distance: {
+        type: String
     }
     }, 
 {

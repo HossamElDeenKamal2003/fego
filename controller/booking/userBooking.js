@@ -18,6 +18,7 @@ const User = require('../../model/regestration/userModel.js');
 const Driver = require('../../model/regestration/driverModel.js');
 const acceptedModel = require('../../model/booking/acceptedModel');
 const minValue = require('../../model/booking/minCharge.js');
+const offerModel = require('../../model/booking/offers.js');
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
@@ -1452,6 +1453,71 @@ const getTripDriver = async function(req, res) {
 };
 
 
+const offer = async function (req, res) {
+    const { offer, driverId, time, distance, tripId, userId } = req.body;
+
+    try {
+        // Upsert an offer (either update existing or insert new)
+        const upsertedOffer = await offerModel.findOneAndUpdate(
+            { tripId: tripId, driverId: driverId },  // Query to find existing offer
+            {                                        // Fields to update or insert
+                offer: offer,
+                driverId: driverId,
+                time: time,
+                distance: distance,
+                tripId: tripId,
+                userId: userId
+            },
+            { new: true, upsert: true }              // Options to return new document and insert if not found
+        );
+
+        // Create notification message
+        const notificationMessage = {
+            title: 'New Trip Available',
+            body: `An Offer For You From Driver.`,
+        };
+
+        // Format the offer with Cairo timezone
+        const options = {
+            timeZone: 'Africa/Cairo',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+        };
+
+        // Find user by userId
+        const user = await User.findOne({ _id: userId });
+
+        // Handle case where user might not be found
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const userFCMToken = user.userFCMToken;
+
+        // Format the offer with proper dates
+        const formattedOffer = {
+            ...upsertedOffer.toObject(),
+            createdAt: new Date(upsertedOffer.createdAt).toLocaleString('en-US', options),
+            updatedAt: new Date(upsertedOffer.updatedAt).toLocaleString('en-US', options),
+        };
+
+        // Emit the new offer via WebSocket if global.io is available
+        if (global.io) {
+            global.io.emit(`newOffer/${tripId}`, formattedOffer);
+            sendNotification(userFCMToken, notificationMessage);
+        }
+
+        // Send success response
+        res.status(200).json({ offer: formattedOffer });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 module.exports = costHandler;
 
@@ -1503,5 +1569,6 @@ module.exports = {
     handleArrivingTime,
     driverWallet,
     getdriverWallet,
-    getTripDriver
+    getTripDriver,
+    offer
 };
