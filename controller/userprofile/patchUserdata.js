@@ -149,10 +149,26 @@ const updatePhoneNumber = async function(req, res) {
     }
 }
 
+const getUser = async function(req, res){
+    const id = req.params.id;
+    try{
+        const userFound = await User.findOne({ _id: id });
+        if(!userFound){
+            return res.status(404).json({message: 'User not found'});
+        }
+        return res.status(200).json({user: userFound});
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ Error: error.message });
+    }
+}
+
 module.exports = {
     updateEmail,
     updateUsername,
     updatePhoneNumber,
     updatePassword,
-    updateProfileimage
+    updateProfileimage,
+    getUser
 }

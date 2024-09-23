@@ -6,7 +6,8 @@ const {
     updateEmail,
     updateUsername,
     updatePhoneNumber,
-    updatePassword
+    updatePassword,
+    getUser
 } = require('../../controller/userprofile/patchUserdata');
 
 // Define the routes
@@ -15,4 +16,5 @@ router.patch('/update-email/:id', updateEmail);
 router.patch('/update-phone-number/:id', updatePhoneNumber);
 router.patch('/change-password/:id', updatePassword);
 router.patch('/change-profile-image/:id', upload.fields([{ name: 'profile_image', maxCount: 1 }]), updateProfileimage);
+router.get('/getUser/:id', getUser)
 module.exports = router; 
