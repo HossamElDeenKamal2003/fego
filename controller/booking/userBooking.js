@@ -1490,7 +1490,7 @@ const offer = async function (req, res) {
 
         // Find user by userId
         const user = await User.findOne({ _id: userId });
-
+        const driver = await Driver.findOne({ _id: driverId });
         // Handle case where user might not be found
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -1507,12 +1507,12 @@ const offer = async function (req, res) {
 
         // Emit the new offer via WebSocket if global.io is available
         if (global.io) {
-            global.io.emit(`newOffer/${tripId}`, formattedOffer);
+            global.io.emit(`newOffer/${tripId}`, {offer: formattedOffer, driver: driver});
             sendNotification(userFCMToken, notificationMessage);
         }
 
         // Send success response
-        res.status(200).json({ offer: formattedOffer });
+        res.status(200).json({ offer: formattedOffer, driver: driver });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: error.message });
