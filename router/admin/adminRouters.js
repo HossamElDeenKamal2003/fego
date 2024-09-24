@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllUsers, getAllDrivers, deleteUser, deleteDriver, getDriverlocation, getTrips,  getDriver, getUser, trips, distacne, alert, updateProperity, getProperity, addProperites } = require('../../controller/aminPanel/adminPanel');
+const { addContact, getContact, deleteContact } = require('../../controller/aminPanel/contacController')
 const { getlocation } = require('../../controller/booking/userBooking');
 const { signup, signin } = require('../../controller/aminPanel/authAdmin');
 router.post('/update-distance', distacne);
@@ -20,4 +21,7 @@ router.get('/get-location', getlocation);
 router.get('/get-driver/:id', getDriver);
 router.get('/get-user/:id', getUser);
 router.get('/get-trips', getTrips);
+router.post('/add-contact', addContact);
+router.get('/get-contacts', getContact);
+router.delete('/delete-contact/:id', deleteContact);
 module.exports = router;
