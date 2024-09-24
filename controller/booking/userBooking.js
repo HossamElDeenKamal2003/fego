@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const driverDestination = require('../../model/booking/driversDestination');
 const detailTrip = require('../../model/regestration/driverModel.js');
-const pendingModel = require('../../model/booking/pendingTrips.js')
+const pendingModel = require('../../model/booking/pendingTrips.js');
 const booking = require('../../model/booking/userBooking.js');
 const bookModel = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
@@ -20,7 +20,7 @@ const acceptedModel = require('../../model/booking/acceptedModel');
 const minValue = require('../../model/booking/minCharge.js');
 const offerModel = require('../../model/booking/offers.js');
 const Conversation =require('../../model/booking/chating/conversation.js');
-const Message = require ('../../model/booking/chating/newChatModel.js')
+const Message = require ('../../model/booking/chating/newChatModel.js');
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
@@ -1584,7 +1584,7 @@ const chating = async function (req, res) {
 
         // Emit the message to the conversation room via Socket.IO
         if (global.io) {
-            global.io.emit(`newMessage/${conversationId}`, newMessage);
+            global.io.emit(`newMessage/${conversationId}`, { message: 'Message sent', data: newMessage });
         }
 
         res.status(201).json({ message: 'Message sent', data: newMessage });
