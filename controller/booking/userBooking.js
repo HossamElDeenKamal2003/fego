@@ -400,12 +400,13 @@ const acceptTrip = async (req, res) => {
 
 
 const getAcceptModel = async function(req, res){
-    const { tripId, driverId, userId } = req.body;
+    const { tripId, driverId, userId, conversationId } = req.body;
     try{
         const updatedBooking = await bookModel.findOne({ _id: tripId });
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const driverLocation = await driverDestination.findOne({ driverId: driverId });
-        const userData = await User.findOne({ _id: userId })
+        const userData = await User.findOne({ _id: userId });
+        
         if(!updatedBooking){
             res.status(404).json({ message: "Trip Not Found"  });
         }
@@ -1588,7 +1589,7 @@ const chating = async function (req, res) {
         res.status(201).json({ message: 'Message sent', data: newMessage });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: error.message });
     }
 };
 
