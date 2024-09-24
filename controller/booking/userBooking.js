@@ -20,6 +20,7 @@ const acceptedModel = require('../../model/booking/acceptedModel');
 const minValue = require('../../model/booking/minCharge.js');
 const offerModel = require('../../model/booking/offers.js');
 const Conversation =require('../../model/booking/chating/conversation.js');
+const Message = require ('../../model/booking/chating/newChatModel.js')
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
@@ -406,7 +407,7 @@ const getAcceptModel = async function(req, res){
         const driverBook = await detailTrip.findOne({ _id: driverId });
         const driverLocation = await driverDestination.findOne({ driverId: driverId });
         const userData = await User.findOne({ _id: userId });
-        
+
         if(!updatedBooking){
             res.status(404).json({ message: "Trip Not Found"  });
         }
