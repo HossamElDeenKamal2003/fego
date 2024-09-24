@@ -47,24 +47,24 @@ io.on('connection', (socket) => {
     });
 
     // Handle chat messages
-    socket.on(`chat/conversationId`, async (obj) => {
+    socket.on('chat', async (obj) => {
     try {
         // Create a new message in the database
         const message = new Message({
-        from: obj.from, 
-        to: obj.to, 
-        msg: obj.msg,
-        media: obj.media,
-        mediaType: obj.mediaType
+            from: obj.from, 
+            to: obj.to, 
+            msg: obj.msg,
+            media: obj.media,
+            mediaType: obj.mediaType
         });
         await message.save();
 
         // Send message to the intended recipient
-        io.emit(`chat/conversationId`, { 
-        msg: obj.msg, 
-        from: obj.from,
-        media: obj.media,
-        mediaType: obj.mediaType
+        io.emit('chat', { 
+            msg: obj.msg, 
+            from: obj.from,
+            media: obj.media,
+            mediaType: obj.mediaType
         });
         console.log({
             msg: obj.msg,

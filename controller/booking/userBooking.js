@@ -19,6 +19,7 @@ const Driver = require('../../model/regestration/driverModel.js');
 const acceptedModel = require('../../model/booking/acceptedModel');
 const minValue = require('../../model/booking/minCharge.js');
 const offerModel = require('../../model/booking/offers.js');
+const Conversation =require('../../model/booking/chating/conversation.js');
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
@@ -307,21 +308,40 @@ const acceptTrip = async (req, res) => {
         ]);
 
         // Validate data
-        if (!booking) {
-            return res.status(404).json({ message: 'Trip not found' });
-        }
-        if (!driverBook) {
-            return res.status(404).json({ message: 'Driver not found' });
-        }
-        if (!userData) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+        if (!booking) return res.status(404).json({ message: 'Trip not found' });
+        if (!driverBook) return res.status(404).json({ message: 'Driver not found' });
+        if (!userData) return res.status(404).json({ message: 'User not found' });
 
         const offer = await offers.findOne({ _id: offerId });
-        if (!offer) {
-            return res.status(404).json({ message: 'Offer not found' });
-        }
+        if (!offer) return res.status(404).json({ message: 'Offer not found' });
+
         await deleteFromAcceptedModel(tripId);
+
+        // Find existing conversation between driver and user
+        let conversation = await Conversation.findOne({
+            participants: { $all: [driverId, userId] }
+        });
+
+        // If no conversation exists, create a new one
+        if (!conversation) {
+            conversation = new Conversation({
+                participants: [driverId, userId]
+            });
+            await conversation.save();
+        }
+
+        // Uncomment this if message creation is required
+        /*
+        const newMessage = new Message({
+            conversationId: conversation._id,
+            from: driverId,
+            to: userId,
+            msg: "Your message text",  // Customize based on your data
+            media: null,  // If any media exists
+            mediaType: null  // If media exists
+        });
+        await newMessage.save();
+        */
 
         // Update booking details
         booking.status = 'accepted';
@@ -329,20 +349,26 @@ const acceptTrip = async (req, res) => {
         booking.driverId = driverId;
 
         // Create notification message
-        const notificationMessage = { 
-            title: 'Trip Accepted', 
-            body: 'Accepted Your Offer', 
-        };
+        const notificationMessage = { title: 'Trip Accepted', body: 'Accepted Your Offer' };
 
         // Get FCM tokens and send notifications
         const driverFCMToken = driverBook.driverFCMToken;
         const userFCMToken = userData.userFCMToken;
 
         if (driverFCMToken) {
-            sendNotification(driverFCMToken, notificationMessage);
+            try {
+                sendNotification(driverFCMToken, notificationMessage);
+            } catch (err) {
+                console.error(`Failed to send notification to driver: ${err.message}`);
+            }
         }
+
         if (userFCMToken) {
-            sendNotification(userFCMToken, notificationMessage);
+            try {
+                sendNotification(userFCMToken, notificationMessage);
+            } catch (err) {
+                console.error(`Failed to send notification to user: ${err.message}`);
+            }
         }
 
         // Find and delete the trip from pendingModel
@@ -356,15 +382,22 @@ const acceptTrip = async (req, res) => {
 
         // Emit the 'tripAccepted' event to both driverId and userId
         if (global.io) {
-            global.io.emit(`tripAccepted/${driverId}`, { updatedBooking, driverBook, driverLocation, userData });
+            global.io.emit(`tripAccepted/${driverId}`, { 
+                updatedBooking, 
+                driverBook, 
+                driverLocation, 
+                userData, 
+                conversation 
+            });
         }
 
-        res.status(200).json({ updatedBooking, driverBook, driverLocation, userData });
+        res.status(200).json({ updatedBooking, driverBook, driverLocation, userData, conversation });
     } catch (error) {
         console.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 const getAcceptModel = async function(req, res){
     const { tripId, driverId, userId } = req.body;
@@ -1519,6 +1552,47 @@ const offer = async function (req, res) {
     }
 };
 
+const chating = async function (req, res) {
+    const { conversationId, from, to, msg, media, mediaType } = req.body;
+
+    try {
+        // Validate required fields
+        if (!conversationId || !from || !to || !msg) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Ensure conversation exists
+        let conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: 'Conversation not found' });
+        }
+
+        // Create a new message document
+        const newMessage = new Message({
+            conversationId,
+            from,
+            to,
+            msg,
+            media,
+            mediaType
+        });
+
+        // Save the message
+        await newMessage.save();
+
+        // Emit the message to the conversation room via Socket.IO
+        if (global.io) {
+            global.io.emit(`newMessage/${conversationId}`, newMessage);
+        }
+
+        res.status(201).json({ message: 'Message sent', data: newMessage });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
 module.exports = costHandler;
 
 
@@ -1570,5 +1644,6 @@ module.exports = {
     driverWallet,
     getdriverWallet,
     getTripDriver,
-    offer
+    offer,
+    chating
 };

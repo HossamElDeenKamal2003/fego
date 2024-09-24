@@ -41,7 +41,8 @@ const {
     driverWallet,
     getdriverWallet,
     getTripDriver,
-    offer
+    offer,
+    chating
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -98,4 +99,5 @@ router.patch('/update-driver-wallet/:id', driverWallet);
 router.get('/get-driver-wallet/:id', getdriverWallet);
 router.get('/get-trips', getTripDriver);
 router.post('/add-offer', offer);
+router.post('/chating', chating)
 module.exports = router;
