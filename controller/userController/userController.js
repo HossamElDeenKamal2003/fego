@@ -51,7 +51,9 @@ const signUp = async (req, res) => {
         if (existNumber) {
             return res.status(400).json({ message: 'Phone number already exists' });
         }
-        const profile_image_url = req.file.path;
+        if(req.file){
+            var profile_image_url = req.file.path;
+        }
 
         const newUser = new User({
             username,
