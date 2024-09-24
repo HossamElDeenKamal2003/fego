@@ -57,7 +57,7 @@ const signUp = async (req, res) => {
 
         const newUser = new User({
             username,
-            profile_image: profile_image_url, // Save the Cloudinary URL
+            profile_image: profile_image_url || null, // Save the Cloudinary URL
             email,
             phoneNumber,
             userFCMToken,
@@ -207,7 +207,7 @@ const login = async (req, res) => {
             return res.status(401).json({ message: 'User not found' });
         }
 
-        // if(user.block === true){
+        if(user.block === true){
             const valid = bcrypt.compareSync(password, user.password);
             if (!valid) {
                 return res.status(401).json({ message: 'Incorrect password' });
@@ -223,7 +223,8 @@ const login = async (req, res) => {
             };
 
             return res.status(200).json({ message: 'Login successful', user: userData });
-        //}
+        }
+        res.status(401).json({message: "Not Authorized to login"});
 
     } catch (error) {
         console.error('Login error:', error);

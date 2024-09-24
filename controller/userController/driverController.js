@@ -127,7 +127,7 @@ const login = async function(req, res) {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // if(user.block === true){
+        if(user.block === true){
             const valid = bcrypt.compareSync(password, user.password);
         if (!valid) {
             return res.status(401).json({ message: 'Incorrect password' });
@@ -151,8 +151,8 @@ const login = async function(req, res) {
                 vehicleType: user.vehicleType
             }
         });
-    //}
-    //res.status(401).json({message: "Not Authorized to login"});
+    }
+    res.status(401).json({message: "Not Authorized to login"});
     } catch (error) {
         console.error('Login error:', error);
         return res.status(500).json({ message: 'Internal server error', error: error.message });
