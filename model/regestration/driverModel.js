@@ -68,7 +68,7 @@ const driverSchema = new mongoose.Schema({
     },
     block: {
         type: Boolean,
-        default: true
+        default: false
     },
     rate:{
         type: Number,
