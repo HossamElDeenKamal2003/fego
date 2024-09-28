@@ -5,7 +5,8 @@ const upload = require('../../middlewares/fiels');
 const {
     patchRole,
     deleteUser,
-    getSupports
+    getSupports,
+    siginupSupport
 } = require('../../controller/userController/support');
 // Sign-up route
 router.post('/signup',upload.single('profile_image'), signUp);
@@ -19,6 +20,7 @@ router.post('/login', login);
 router.patch('/updatepassword', updatePassword);
 router.patch('/handle-token/:id', handleToken);
 router.patch('/patchRole', patchRole);
-router.patch('/delete-permission', deleteUser);
+router.delete('/delete-permission/:id', deleteUser);
 router.get('/get_supports', getSupports);
+router.post('/support_signup', siginupSupport)
 module.exports = router;

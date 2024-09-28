@@ -1,16 +1,37 @@
 const User = require('../../model/regestration/userModel');
+const support = require('../../model/regestration/support');
+const bcrypt = require('bcrypt');
+
+const siginupSupport = async function(req, res) {
+    const { username, role, email, phoneNumber, password } = req.body;
+    try {
+        const newSupport = new support({
+            username, 
+            role,
+            email, 
+            phoneNumber,
+            password: bcrypt.hashSync(password, 10)
+        });
+        await newSupport.save();
+        res.status(201).json({ user: newSupport }); // Send back the created user
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 const patchRole = async function(req, res) {
     const { userId, role } = req.body;
     try {
-        const userRole = await User.findOneAndUpdate(
+        const userRole = await support.findOneAndUpdate(
             { _id: userId },
             { role: role },
             { new: true }
         );
-        if (!userRole) {
-            return res.status(400).json({ message: "Error When Patching Role for This User" });
+        if(!userRole){
+            return res.status(400).json({message: "User Not Found"});
         }
+
         res.status(200).json({ message: "Role Updated Successfully" });
     } catch (error) {
         console.error(error);
@@ -19,13 +40,9 @@ const patchRole = async function(req, res) {
 };
 
 const deleteUser = async function(req, res) {
-    const { userId } = req.body;
+    const  id = req.params.id; // Change to access userId from params
     try {
-        const deletePermission = await User.findOneAndUpdate(
-            { _id: userId },
-            { role: "" },
-            { new: true }
-        );
+        const deletePermission = await support.findOneAndDelete({ _id: id });
         if (!deletePermission) {
             return res.status(400).json({ message: "Error When Deleting Role for This User" });
         }
@@ -38,8 +55,8 @@ const deleteUser = async function(req, res) {
 
 const getSupports = async function(req, res) {
     try {
-        const users = await User.find({ role: { $ne: "", $exists: true } });
-        res.status(200).json({users: users});
+        const users = await support.find();
+        res.status(200).json({ users: users });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: error.message });
@@ -49,5 +66,6 @@ const getSupports = async function(req, res) {
 module.exports = {
     patchRole,
     deleteUser,
-    getSupports
+    getSupports,
+    siginupSupport
 };

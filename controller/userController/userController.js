@@ -3,7 +3,6 @@ const User = require('../../model/regestration/userModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // For generating random OTP
 const bcrypt = require('bcrypt'); // Make sure to install bcryptjs
-
 // SMSMISR API configuration
 const SMSMISR_API_URL = 'https://smsmisr.com/api/OTP/';
 const SMSMISR_API_USERNAME = 'd6a935c84a6701b7765d0c7aba921fbaa258a328003554b00fe56cad81b2b622';

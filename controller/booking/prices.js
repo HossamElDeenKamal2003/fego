@@ -1,18 +1,48 @@
 const mongoose = require('mongoose');
-const PricesModel = require('../../model/booking/prices');
+const {
+    Level1,
+    Level2,
+    Level3,
+    Level4
+} = require('../../model/booking/prices');
 
-const putPrices = async function(req, res) {
-    const { country, priceCar, motorocycle, priceVan } = req.body;
+const getLevelModel = (level) => {
+    switch (level) {
+        case 'level1':
+            return Level1;
+        case 'level2':
+            return Level2;
+        case 'level3':
+            return Level3;
+        case 'level4':
+            return Level4;
+        default:
+            return null;
+    }
+};
+
+// PUT Prices for each level
+const putPrices = async function (req, res) {
+    const { level } = req.params;
+    const { country, priceCar, motorocycle, priceVan, penfits, compfort } = req.body;
+
+    const LevelModel = getLevelModel(level);
+    if (!LevelModel) {
+        return res.status(400).json({ message: 'Invalid level specified' });
+    }
+
     try {
         if (!country || !priceCar || !motorocycle || !priceVan) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const sendPrices = new PricesModel({
+        const sendPrices = new LevelModel({
             country,
             priceCar,
             motorocycle,
-            priceVan
+            priceVan,
+            penfits,
+            compfort
         });
 
         await sendPrices.save();
@@ -23,19 +53,28 @@ const putPrices = async function(req, res) {
     }
 };
 
+// PATCH Prices for each level
+const patchPrices = async function (req, res) {
+    const { level } = req.params;
+    const { country, priceCar, motorocycle, priceVan, penfits, compfort } = req.body;
 
-const patchPrices = async function(req, res) {
-    const { country, priceCar, motorocycle, priceVan } = req.body;
+    const LevelModel = getLevelModel(level);
+    if (!LevelModel) {
+        return res.status(400).json({ message: 'Invalid level specified' });
+    }
+
     try {
         if (!country || !priceCar || !motorocycle || !priceVan) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const updatePrice = await PricesModel.updateMany({}, {
+        const updatePrice = await LevelModel.updateMany({}, {
             country,
             priceCar,
             motorocycle,
-            priceVan
+            priceVan,
+            penfits,
+            compfort
         });
 
         if (updatePrice.modifiedCount === 0) {
@@ -49,10 +88,17 @@ const patchPrices = async function(req, res) {
     }
 };
 
-const getPrices = async function(req, res) {
-    const { country } = req.params; // Destructure the country parameter from req.params
+// GET Prices for each level
+const getPrices = async function (req, res) {
+    const { level, country } = req.params;
+
+    const LevelModel = getLevelModel(level);
+    if (!LevelModel) {
+        return res.status(400).json({ message: 'Invalid level specified' });
+    }
+
     try {
-        const pricesData = await PricesModel.find({ country }); // Use a different name for the result of the query
+        const pricesData = await LevelModel.find({ country });
         if (!pricesData || pricesData.length === 0) {
             return res.status(404).json({ message: 'No prices found for the specified country' });
         }
@@ -62,7 +108,6 @@ const getPrices = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 module.exports = {
     putPrices,
