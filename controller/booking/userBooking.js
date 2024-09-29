@@ -54,8 +54,9 @@ const findDrivers = async (vehicleType, latitude, longitude, res) => {
             }
         ]);
 
-        if (drivers.length === 0) {
-            res.status(200).json({ message: "No Drivers Around You" });
+        // Check if any drivers were found
+        if (!drivers || drivers.length === 0) {
+            return null; // No drivers found, return null
         }
 
         // Find detailed information for each nearby driver and include the distance
@@ -77,6 +78,7 @@ const findDrivers = async (vehicleType, latitude, longitude, res) => {
         throw error;
     }
 };
+
 
 
 const updateDistance = async function(req, res) {
@@ -193,9 +195,10 @@ const bookTrip = async (req, res) => {
         // Find drivers using the findDrivers function
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
 
-        if (availableDrivers.length === 0) {
+        if (!availableDrivers || availableDrivers.length === 0) {
             return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
         }
+        
 
         // Debugging: Log available drivers and their details
         console.log('Available Drivers:', availableDrivers);
@@ -230,7 +233,7 @@ const bookTrip = async (req, res) => {
 
     } catch (error) {
         console.log(error); 
-        return res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
+        return res.status(500).json({ message: error.message });
     }
 };
 
