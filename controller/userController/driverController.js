@@ -23,14 +23,17 @@ const signup = async function(req, res) {
             longitude,
             driverFCMToken,
             wallet,
+            
         } = req.body;
 
         // Profile image should be declared after req.files is available
         const licenseImage = req.files?.['licenseImage'] ? req.files['licenseImage'][0].path : null;
         const driver_licence_image = req.files?.['driver_licence_image'] ? req.files['driver_licence_image'][0].path : null;
         const profile_image = req.files?.['profile_image'] ? req.files['profile_image'][0].path : null;
-
-        if (!profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id ) {
+        const national_front = req.files?.['national_front'] ? req.files['national_front'][0].path : null;
+        const national_back = req.files?.['national_back'] ? req.files['national_back'][0].path : null;
+        const national_selfie = req.files?.['national_selfie'] ? req.files['national_selfie'][0].path : null;
+        if (!profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id || !national_front ||!national_back || !national_selfie) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
@@ -61,6 +64,9 @@ const signup = async function(req, res) {
             vehicleType,
             password: hashedPassword,
             wallet,
+            national_front,
+            national_back,
+            national_selfie,
         });
 
         await newDriver.save();
@@ -105,6 +111,9 @@ const signup = async function(req, res) {
                 carColor: carColor,
                 driverFCMToken,
                 wallet,
+                national_front,
+            national_back,
+            national_selfie,
             }
         });
     } catch (error) {
