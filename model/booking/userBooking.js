@@ -108,6 +108,10 @@ const bookingSchema = new mongoose.Schema({
     arrivingTime: {
         type: String,
         default: null
+    },
+    comfort: {
+        type: Boolean,
+        default: false
     }
 });
 

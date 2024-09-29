@@ -16,6 +16,7 @@ const signup = async function(req, res) {
             const hashedPassword = bcrypt.hashSync(password, 10);
             const newAdmin = new authAdmin({
                 username: username,
+                role: "admin",
                 password: hashedPassword
             });
             await newAdmin.save();
