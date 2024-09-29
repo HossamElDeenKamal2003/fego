@@ -56,7 +56,7 @@ const putPrices = async function (req, res) {
 // PATCH Prices for each level
 const patchPrices = async function (req, res) {
     const { level } = req.params;
-    const { country, priceCar, motorocycle, priceVan, penfits, comfort } = req.body;
+    const { country, priceCar, motorocycle, priceVan, penfits, compfort } = req.body;
 
     const LevelModel = getLevelModel(level);
     if (!LevelModel) {
@@ -75,7 +75,7 @@ const patchPrices = async function (req, res) {
                 motorocycle: motorocycle,
                 priceVan: priceVan,
                 penfits: penfits,
-                comfort: comfort
+                compfort: compfort
             },
             { new: true }
         );

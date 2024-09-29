@@ -1,4 +1,5 @@
 const authAdmin = require('../../model/regestration/authAdmin');
+const supportModel = require('../../model/regestration/support');
 const bcrypt = require('bcrypt');
 
 const signup = async function(req, res) {
@@ -30,7 +31,6 @@ const signup = async function(req, res) {
     }
 }
 
-
 const signin = async function(req, res) {
     try {
         const { username, password } = req.body;
@@ -40,9 +40,15 @@ const signin = async function(req, res) {
             return res.status(400).json({ message: "Please enter username and password" });
         }
 
-        const user = await authAdmin.findOne({ username: username });
+        // First, check in the authAdmin model
+        let user = await authAdmin.findOne({ username: username });
 
-        // Check if user exists
+        // If user not found, check in the support model
+        if (!user) {
+            user = await supportModel.findOne({ username: username }); // Use findOne instead of find for a single document
+        }
+
+        // If user still not found after both queries
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -60,7 +66,6 @@ const signin = async function(req, res) {
         return res.status(500).json({ message: error.message });
     }
 }
-
 
 module.exports = {
     signup,
