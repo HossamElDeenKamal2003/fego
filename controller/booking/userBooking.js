@@ -1480,14 +1480,18 @@ const handleArrivingTime = async function(req, res){
 
 const getTripDriver = async function(req, res) {
     try {
+        // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
-        if (trips.length === 0) {
-            return res.status(200).json([]);
+
+        // Emit trips to WebSocket clients
+        if (global.io) {
+            global.io.emit('tripsUpdate', trips);
         }
 
+        // Send response back to the client who made the HTTP request
         res.status(200).json({ trips });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 };

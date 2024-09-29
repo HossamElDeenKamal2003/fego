@@ -112,8 +112,8 @@ const signup = async function(req, res) {
                 driverFCMToken,
                 wallet,
                 national_front,
-            national_back,
-            national_selfie,
+                national_back,
+                national_selfie,
             }
         });
     } catch (error) {
