@@ -787,7 +787,7 @@ const history = async function(req, res){
 
         // Emit trips with driver details to all WebSocket clients
         if (global.io) {
-            global.io.emit('tripsUpdate', {tripsWithDriverDetails});
+            global.io.emit('tripsUpdate', tripsWithDriverDetails);
         }
 
         // Send response with trips to the client who made the HTTP request
@@ -1080,7 +1080,7 @@ const allTrips = async function(req, res, io) {
         // Emit trips to all WebSocket clients
         if (io) {
             console.log("Emitting trips with status 'pending'");
-            io.emit('tripsUpdate', {trips});
+            io.emit('tripsUpdate', trips);
         }
 
         // Send response with trips to the client who made the HTTP request
@@ -1485,12 +1485,12 @@ const getTripDriver = async function(req, res) {
     
             // Emit trips to WebSocket clients
             if (global.io) {
-                global.io.emit('tripsUpdate', {trips});
+                global.io.emit('tripsUpdate', trips);
             }
-
         } catch (error) {
             console.error(error);
         }
+
     
 };
 

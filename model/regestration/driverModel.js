@@ -82,6 +82,15 @@ const driverSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    national_front:{
+        type: String,
+    },
+    national_back: {
+        type: String
+    },
+    national_selfie:{
+        type: String
+    }
 });
 
 
