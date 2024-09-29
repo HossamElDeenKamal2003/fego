@@ -787,7 +787,7 @@ const history = async function(req, res){
 
         // Emit trips with driver details to all WebSocket clients
         if (global.io) {
-            global.io.emit('tripsUpdate', tripsWithDriverDetails);
+            global.io.emit('tripsUpdate', {tripsWithDriverDetails});
         }
 
         // Send response with trips to the client who made the HTTP request
@@ -1080,7 +1080,7 @@ const allTrips = async function(req, res, io) {
         // Emit trips to all WebSocket clients
         if (io) {
             console.log("Emitting trips with status 'pending'");
-            io.emit('tripsUpdate', trips);
+            io.emit('tripsUpdate', {trips});
         }
 
         // Send response with trips to the client who made the HTTP request
@@ -1479,23 +1479,20 @@ const handleArrivingTime = async function(req, res){
 }
 
 const getTripDriver = async function(req, res) {
-    try {
-        // Find all trips with 'pending' status
-        const trips = await bookModel.find({ status: 'pending' });
+        try {
+            // Find all trips with 'pending' status
+            const trips = await bookModel.find({ status: 'pending' });
+    
+            // Emit trips to WebSocket clients
+            if (global.io) {
+                global.io.emit('tripsUpdate', {trips});
+            }
 
-        // Emit trips to WebSocket clients as an object
-        if (global.io) {
-            global.io.emit('tripsUpdate', { trips });
+        } catch (error) {
+            console.error(error);
         }
-
-        // Send response back to the client who made the HTTP request
-        res.status(200).json({ trips });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: error.message });
-    }
+    
 };
-
 
 
 const offer = async function (req, res) {
