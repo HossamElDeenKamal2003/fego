@@ -56,7 +56,7 @@ const putPrices = async function (req, res) {
 // PATCH Prices for each level
 const patchPrices = async function (req, res) {
     const { level } = req.params;
-    const { country, priceCar, motorocycle, priceVan, penfits, compfort } = req.body;
+    const { country, priceCar, motorocycle, priceVan, penfits, comfort } = req.body;
 
     const LevelModel = getLevelModel(level);
     if (!LevelModel) {
@@ -68,16 +68,20 @@ const patchPrices = async function (req, res) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const updatePrice = await LevelModel.updateMany({}, {
-            country,
-            priceCar,
-            motorocycle,
-            priceVan,
-            penfits,
-            compfort
-        });
+        const updatePrice = await LevelModel.findOneAndUpdate(
+            { country: country },
+            {
+                priceCar: priceCar,
+                motorocycle: motorocycle,
+                priceVan: priceVan,
+                penfits: penfits,
+                comfort: comfort
+            },
+            { new: true }
+        );
 
-        if (updatePrice.modifiedCount === 0) {
+        // Check if an update was made
+        if (!updatePrice) {
             return res.status(404).json({ message: 'No prices were updated' });
         }
 
@@ -90,7 +94,7 @@ const patchPrices = async function (req, res) {
 
 // GET Prices for each level
 const getPrices = async function (req, res) {
-    const { level, country } = req.params;
+    const { level } = req.params;
 
     const LevelModel = getLevelModel(level);
     if (!LevelModel) {
@@ -98,7 +102,7 @@ const getPrices = async function (req, res) {
     }
 
     try {
-        const pricesData = await LevelModel.find({ country });
+        const pricesData = await LevelModel.find();
         if (!pricesData || pricesData.length === 0) {
             return res.status(404).json({ message: 'No prices found for the specified country' });
         }
@@ -109,8 +113,38 @@ const getPrices = async function (req, res) {
     }
 };
 
+// DELETE Prices for each level based on country
+const deletePrice = async function (req, res) {
+    const { level } = req.params;
+    const { country } = req.body;
+
+    const LevelModel = getLevelModel(level);
+    if (!LevelModel) {
+        return res.status(400).json({ message: 'Invalid level specified' });
+    }
+
+    try {
+        if (!country) {
+            return res.status(400).json({ message: 'Country is required' });
+        }
+
+        const deleteResult = await LevelModel.deleteOne({ country: country });
+
+        // Check if any document was deleted
+        if (deleteResult.deletedCount === 0) {
+            return res.status(404).json({ message: 'No prices found for the specified country' });
+        }
+
+        return res.status(200).json({ message: 'Price deleted successfully' });
+    } catch (error) {
+        console.log('Error:', error.message);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     putPrices,
     patchPrices,
-    getPrices
+    getPrices,
+    deletePrice
 };

@@ -103,7 +103,7 @@ const level4Schema = new mongoose.Schema({
     penfits: {
         type: Number,
     },
-    compfort:{
+    comfort:{
         type: Number
     }
 });
