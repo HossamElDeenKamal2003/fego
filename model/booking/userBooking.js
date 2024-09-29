@@ -113,18 +113,6 @@ const bookingSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    national_front: {
-        type: String,
-        required: true,
-    },
-    national_back: {
-        type: String,
-        required: true,
-    },
-    national_selfie: {
-        type: String,
-        required: true,
-    },
 });
 
 // Create a 2dsphere index on the pickupLocation field
