@@ -1483,7 +1483,7 @@ const getTripDriver = async function(req, res) {
         // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
 
-        // Emit trips to WebSocket clients
+        // Emit trips to WebSocket clients as an object
         if (global.io) {
             global.io.emit('tripsUpdate', { trips });
         }
@@ -1495,6 +1495,7 @@ const getTripDriver = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 const offer = async function (req, res) {
