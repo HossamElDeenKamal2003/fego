@@ -225,6 +225,8 @@ const bookTrip = async (req, res) => {
 
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
         const updatedBooking = await savedBooking.save();
         if (global.io) {
             global.io.emit('get-trips', { trips: tripsSocket });
