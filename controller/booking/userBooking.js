@@ -226,6 +226,9 @@ const bookTrip = async (req, res) => {
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
 
         // Return the updated booking and available drivers
         return res.status(200).json({
