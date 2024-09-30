@@ -225,9 +225,9 @@ const bookTrip = async (req, res) => {
 
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
+        const updatedBooking = await savedBooking.save();
         const trips = await bookModel.find({ status: 'pending' });
         const tripsSocket = trips.map(trip => trip.toObject());
-        const updatedBooking = await savedBooking.save();
         if (global.io) {
             global.io.emit('get-trips', { trips: tripsSocket });
         }
@@ -401,6 +401,12 @@ const acceptTrip = async (req, res) => {
                 conversation 
             });
         }
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
+        
 
         res.status(200).json({ updatedBooking, driverBook, driverLocation, userData, conversation });
     } catch (error) {
@@ -471,7 +477,11 @@ const cancelledTripbeforestart = async function(req, res) {
         if (global.io) {
             global.io.emit(`trip/${tripId}`, booking);
         }
-
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
         // Respond with the updated booking
         res.status(200).json({ booking });
     } catch (error) {
@@ -496,6 +506,11 @@ const driverCancel = async function (req, res) {
             await findtrip.save();  
             if(global.io){
                 global.io.emit(`trip/${tripId}`, tripData);
+            }
+            const trips = await bookModel.find({ status: 'pending' });
+            const tripsSocket = trips.map(trip => trip.toObject());
+            if (global.io) {
+                global.io.emit('get-trips', { trips: tripsSocket });
             }
             return res.status(200).json({ message: "Trip Cancelled by Driver" });
         } else {
@@ -569,7 +584,11 @@ const startTrip = async (req, res) => {
         if (global.io) {
             global.io.emit(`tripStarted/${tripId}`, { updatedBooking, driverBook, userData });
         }
-
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
         // Respond with the updated booking and driver data
         res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
@@ -635,7 +654,11 @@ const arriving = async (req, res) => {
         if (userFcmToken) {
             sendNotification(userFcmToken, notificationMessage);
         }
-
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
         res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
         console.error(error.message);
@@ -706,7 +729,11 @@ const canceledTrip = async (req, res) => {
         if (global.io) {
             global.io.emit(`tripCancelled/${tripId}`, { updatedBooking, driverBook, userData });
         }
-
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
         // Respond with the updated booking and driver data
         res.status(200).json({ updatedBooking, driverBook });
     } catch (error) {
@@ -744,6 +771,11 @@ const endTrip = async (req, res) => {
         }
         if (!deletedPendingTrip) {
             console.warn(`Trip ${tripId} not found in pendingModel`);
+        }
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
         }
         res.status(200).json({updatedBooking, driverBook});
     } catch (error) {
