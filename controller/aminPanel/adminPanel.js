@@ -5,6 +5,7 @@
     const distance = require('../../model/booking/maxDistance');
     const properities = require('../../model/booking/tripProperity');
     const bookModel = require('../../model/booking/userBooking');
+    const pannerModel = require('../../model/booking/panner')
     const updateProperity = async function(req, res) {
         const { time, distance } = req.body;
         try {
@@ -236,9 +237,88 @@
         }
     };
     
-    
+// Function to add a new panner
+const addPanner = async (req, res) => {
+    try {
+        // Extract text from the request body
+        //const { text } = req.body;
 
+        // Extract image URLs from the uploaded files
+        const images = req.files.map(file => file.path);
 
+        // Create a new panner entry with images and text
+        const newPanner = new pannerModel({ images });
+        await newPanner.save();
+
+        res.status(201).json({ message: 'Panner added successfully', panner: newPanner });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to add panner' });
+    }
+};
+// Function to delete a panner by ID
+// Function to delete a specific image from an existing panner by ID
+const deletePanner = async (req, res) => {
+    const { id } = req.params; // Panner ID
+    const { imageUrl } = req.body; // Image URL to delete
+
+    try {
+        // Find the panner by ID and remove the specified image URL from the images array
+        const updatedPanner = await pannerModel.findByIdAndUpdate(
+            id,
+            { $pull: { images: imageUrl } },
+            { new: true }
+        );
+
+        if (!updatedPanner) {
+            return res.status(404).json({ message: 'Panner not found' });
+        }
+
+        res.status(200).json({ message: 'Image deleted successfully', panner: updatedPanner });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to delete image' });
+    }
+};
+
+const patchPanner = async (req, res) => {
+    const { id } = req.body;
+
+    try {
+        const newImages = req.files.map(file => file.path);
+
+        const updatedPanner = await pannerModel.findByIdAndUpdate(
+            id,
+            { $push: { images: { $each: newImages } } },
+            { new: true }
+        );
+
+        if (!updatedPanner) {
+            return res.status(404).json({ message: 'Panner not found' });
+        }
+
+        res.status(200).json({ message: 'Images added successfully', panner: updatedPanner });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to add images' });
+    }
+};
+
+const getPanner = async function(req, res){
+    const { id } = req.params;
+    try{
+        const panners = await pannerModel.find();
+        
+        if(!panners){
+            return res.status(500).json({ message: error.message });
+        }
+        res.status(200).json({ panners: panners });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
     // export functions 
     module.exports = {
         getAllUsers,
@@ -255,5 +335,9 @@
         getDriver,
         getDriver,
         getUser,
-        getTrips
+        getTrips,
+        addPanner,
+        deletePanner,
+        patchPanner,
+        getPanner
     }

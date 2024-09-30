@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getAllDrivers, deleteUser, deleteDriver, getDriverlocation, getTrips,  getDriver, getUser, trips, distacne, alert, updateProperity, getProperity, addProperites } = require('../../controller/aminPanel/adminPanel');
+const upload = require('../../middlewares/fiels'); 
+
+const { addPanner,deletePanner, getPanner, patchPanner, getAllUsers, getAllDrivers, deleteUser, deleteDriver, getDriverlocation, getTrips,  getDriver, getUser, trips, distacne, alert, updateProperity, getProperity, addProperites } = require('../../controller/aminPanel/adminPanel');
 const { addContact, getContact, deleteContact } = require('../../controller/aminPanel/contacController')
 const { getlocation } = require('../../controller/booking/userBooking');
 const { signup, signin } = require('../../controller/aminPanel/authAdmin');
@@ -24,4 +26,8 @@ router.get('/get-trips', getTrips);
 router.post('/add-contact', addContact);
 router.get('/get-contacts', getContact);
 router.delete('/delete-contact/:id', deleteContact);
+router.post('/panners', upload.array('images', 100), addPanner); 
+router.patch('/patch-panners', upload.array('images', 1000), patchPanner);
+router.delete('/delete/:id', deletePanner);
+router.get('/get-panner/:id', getPanner);
 module.exports = router;
