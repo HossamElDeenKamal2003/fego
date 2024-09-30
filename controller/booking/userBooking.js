@@ -1482,15 +1482,23 @@ const getTripDriver = async function(req, res) {
     try {
         // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
+
+        // Convert trips to plain JavaScript objects for WebSocket emission
+        const tripsSocket = trips.map(trip => trip.toObject());
+
+        // Emit trips to WebSocket clients
         if (global.io) {
-            global.io.emit('get-trips', {trips: trips});
+            global.io.emit('get-trips', { trips: tripsSocket });
         }
+
+        // Send response to the client who made the HTTP request
         res.status(200).json({ trips });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'INTERNAL SERVER ERROR' }); // Add error response for HTTP
+        res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
+
 
 const offer = async function (req, res) {
     const { offer, driverId, time, distance, tripId, userId } = req.body;
