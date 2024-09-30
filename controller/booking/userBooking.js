@@ -472,8 +472,6 @@ const cancelledTripbeforestart = async function(req, res) {
         if (userFcmToken) {
             await sendNotification(userFcmToken, notificationMessage);
         }
-
-          // Emit the updated trip data if socket.io is initialized
         if (global.io) {
             global.io.emit(`trip/${tripId}`, booking);
         }
