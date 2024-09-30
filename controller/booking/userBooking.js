@@ -1479,21 +1479,22 @@ const handleArrivingTime = async function(req, res){
 }
 
 const getTripDriver = async function(req, res) {
-        try {
-            // Find all trips with 'pending' status
-            const trips = await bookModel.find({ status: 'pending' });
-    
-            // Emit trips to WebSocket clients
-            if (global.io) {
-                global.io.emit('tripsUpdate', trips);
-            }
-        } catch (error) {
-            console.error(error);
+    try {
+        // Find all trips with 'pending' status
+        const trips = await bookModel.find({ status: 'pending' });
+
+        // Emit trips to WebSocket clients
+        if (global.io) {
+            global.io.emit('tripsUpdate', trips); // Removed .json
         }
 
-    
+        // Send response to the client who made the HTTP request
+        res.status(200).json({ trips });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'INTERNAL SERVER ERROR' }); // Add error response for HTTP
+    }
 };
-
 
 const offer = async function (req, res) {
     const { offer, driverId, time, distance, tripId, userId } = req.body;
