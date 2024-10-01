@@ -307,7 +307,7 @@ try {
 const getPanner = async function(req, res){
 const { id } = req.params;
 try{
-    const panners = await pannerModel.find({_id:id});
+    const panners = await pannerModel.findOne({_id:id});
     
     if(!panners){
         return res.status(500).json({ message: error.message });
