@@ -195,11 +195,7 @@ const bookTrip = async (req, res) => {
         await pending.save();
 
         // Find drivers using the findDrivers function
-        const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
-
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(200).json({booking: updatedBooking });
-        }
+        
         
 
         // Debugging: Log available drivers and their details
@@ -226,6 +222,11 @@ const bookTrip = async (req, res) => {
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
+        const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
+
+        if (!availableDrivers || availableDrivers.length === 0) {
+            return res.status(200).json({ booking: updatedBooking});
+        }
         const trips = await bookModel.find({ status: 'pending' });
         const tripsSocket = trips.map(trip => trip.toObject());
         if (global.io) {
