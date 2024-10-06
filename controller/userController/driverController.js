@@ -122,7 +122,6 @@ const signup = async function(req, res) {
     }
 };
 
-
 // Login function
 const login = async function(req, res) {
     const { email, phoneNumber, password } = req.body;

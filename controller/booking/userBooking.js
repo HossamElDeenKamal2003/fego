@@ -197,9 +197,9 @@ const bookTrip = async (req, res) => {
         // Find drivers using the findDrivers function
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
 
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
-        }
+        // if (!availableDrivers || availableDrivers.length === 0) {
+        //     return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
+        // }
         
 
         // Debugging: Log available drivers and their details
