@@ -195,12 +195,16 @@ const bookTrip = async (req, res) => {
         await pending.save();
 
         // Find drivers using the findDrivers function
-        
-        
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
+
+        if (!availableDrivers || availableDrivers.length === 0) {
+            return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
+        }
+        
 
         // Debugging: Log available drivers and their details
         console.log('Available Drivers:', availableDrivers);
+
         // Send notification to all available drivers
         for (const driver of availableDrivers) {
             // Check if the driver has an FCM token saved in the database
@@ -222,10 +226,6 @@ const bookTrip = async (req, res) => {
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
-
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(200).json({ booking: updatedBooking});
-        }
         const trips = await bookModel.find({ status: 'pending' });
         const tripsSocket = trips.map(trip => trip.toObject());
         if (global.io) {
