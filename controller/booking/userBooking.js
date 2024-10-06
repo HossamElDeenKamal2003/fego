@@ -29,7 +29,7 @@ async function deleteFromAcceptedModel(tripId) {
 }
 
 
-const findDrivers = async (vehicleType, latitude, longitude, res) => {
+const findDrivers = async (vehicleType, latitude, longitude) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
         throw new Error('Vehicle type, latitude, and longitude are required');
     }
@@ -54,9 +54,8 @@ const findDrivers = async (vehicleType, latitude, longitude, res) => {
             }
         ]);
 
-        // Check if any drivers were found
         if (!drivers || drivers.length === 0) {
-            return null; // No drivers found, return null
+            return []; // Always return an array, even if no drivers are found
         }
 
         // Find detailed information for each nearby driver and include the distance
@@ -65,21 +64,19 @@ const findDrivers = async (vehicleType, latitude, longitude, res) => {
                 const detail = await detailTrip.findOne({ _id: driver.driverId });
                 return {
                     ...driver,
-                    ...detail?.toObject(), // Include additional driver details
+                    ...(detail ? detail.toObject() : {}), // Include additional driver details if found
                     distance: driver.distance // Include calculated distance
                 };
             })
         );
 
-        return driverDetails;
+        return driverDetails; // Return detailed driver information
 
     } catch (error) {
         console.error('Error finding drivers:', error);
         throw error;
     }
 };
-
-
 
 const updateDistance = async function(req, res) {
     const { maxDistance } = req.body;
