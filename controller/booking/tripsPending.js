@@ -1,33 +1,14 @@
+const { Server } = require("socket.io");
 const mongoose = require('mongoose');
-const driverDestination = require('../../model/booking/driversDestination');
-const detailTrip = require('../../model/regestration/driverModel.js');
-const pendingModel = require('../../model/booking/pendingTrips.js');
-const booking = require('../../model/booking/userBooking.js');
 const bookModel = require('../../model/booking/userBooking.js');
 const DestDriver = require('../../model/booking/driversDestination.js');
-const user = require('../../model/regestration/userModel.js');
-const http = require('http');
-const server = http.createServer();
-const { Server } = require("socket.io");
-const io = new Server(server);
-const Distance = require('../../model/booking/maxDistance.js');
-const offers = require('../../model/booking/offers.js');
-const PricesModel = require('../../model/booking/prices.js');
-const sendNotification = require('../../firebase.js');
-const User = require('../../model/regestration/userModel.js');
-const Driver = require('../../model/regestration/driverModel.js');
-const acceptedModel = require('../../model/booking/acceptedModel');
-const minValue = require('../../model/booking/minCharge.js');
-const offerModel = require('../../model/booking/offers.js');
-const Conversation =require('../../model/booking/chating/conversation.js');
-const Message = require ('../../model/booking/chating/newChatModel.js');
-let connectedClients = {};
 
 const tripsHandler = (io) => {
     io.on('connection', (socket) => {
         console.log('Client connected');
 
-        socket.on('bookTrip', async () => {
+        // Monitor new trips added to the database
+        bookModel.watch([{ $match: { operationType: 'insert' } }]).on('change', async (data) => {
             try {
                 // Get all trips with status 'pending'
                 const trips = await bookModel.find({ status: 'pending' });
