@@ -196,14 +196,9 @@ const bookTrip = async (req, res) => {
 
         // Find drivers using the findDrivers function
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
-
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(404).json({ message: 'No drivers available in your area with the specified vehicle type.' });
-        }
         
-
-        // Debugging: Log available drivers and their details
-        console.log('Available Drivers:', availableDrivers);
+        if(availableDrivers || availableDrivers.length !== 0){
+            console.log('Available Drivers:', availableDrivers);
 
         // Send notification to all available drivers
         for (const driver of availableDrivers) {
@@ -223,9 +218,15 @@ const bookTrip = async (req, res) => {
             }
         } 
 
+        }
+        // Debugging: Log available drivers and their details
+        
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
+        if (!availableDrivers || availableDrivers.length === 0) {
+            return res.status(404).json({ booking: updatedBooking });
+        }
         const trips = await bookModel.find({ status: 'pending' });
         const tripsSocket = trips.map(trip => trip.toObject());
         if (global.io) {
