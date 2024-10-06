@@ -78,7 +78,7 @@ const userSearches = new Map(); // Map<socketId, searchCriteria>
 
 const locationHandler = require('./controller/booking/driverDest'); // Adjust the path as necessary
 const costHandler = require('./controller/booking/costUpdate');
-const tripsHandler = require('./controller/booking/userBooking');
+const tripsHandler = require('./controller/booking/tripsPending');
 offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
