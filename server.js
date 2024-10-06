@@ -78,6 +78,7 @@ const userSearches = new Map(); // Map<socketId, searchCriteria>
 
 const locationHandler = require('./controller/booking/driverDest'); // Adjust the path as necessary
 const costHandler = require('./controller/booking/costUpdate');
+const tripsHandler = require('./controller/booking/userBooking');
 offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
@@ -90,7 +91,7 @@ chatHandler(io);
 //tripStatusHandler(io);
 driverDataHandler(io);
 locationHandler(io) // Attaches the socket instance to the HTTP server
-
+tripsHandler(io);
 //updateLocation(io);
 
 global.io = io;
@@ -125,7 +126,7 @@ process.on("SIGTERM", () => {
         console.log("Process terminated");
     });
 });
-
+module.exports = app;
 // Utility function to calculate distance between two coordinates
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3; // Earth radius in meters
