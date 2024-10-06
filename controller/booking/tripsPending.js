@@ -64,6 +64,7 @@ const tripsHandler = (io) => {
                     // If there are nearby trips, send them to the driver
                     if (nearbyTrips.length > 0) {
                         const tripsSocket = nearbyTrips.map((trip) => trip.toObject());
+                        console.log('Trips: ', tripsSocket);
                         socket.emit(`get-trips-socket/${driver.driverId}`, { trips: tripsSocket });
                     }
                 }
