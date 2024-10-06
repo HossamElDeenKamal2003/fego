@@ -56,7 +56,7 @@ const findDrivers = async (vehicleType, latitude, longitude, res) => {
 
         // Check if any drivers were found
         if (!drivers || drivers.length === 0) {
-            return null; // No drivers found, return null
+            return []; // No drivers found, return null
         }
 
         // Find detailed information for each nearby driver and include the distance
@@ -193,9 +193,16 @@ const bookTrip = async (req, res) => {
             comfort
         });
         await pending.save();
+
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
         // Debugging: Log available drivers and their details
         console.log('Available Drivers:', availableDrivers);
+
+        // Ensure availableDrivers is an array before iterating
+        if (!Array.isArray(availableDrivers)) {
+            console.error('availableDrivers is not an array:', availableDrivers);
+            return res.status(500).json({ message: 'Error fetching available drivers.' });
+        }
 
         // Send notification to all available drivers
         for (const driver of availableDrivers) {
@@ -223,9 +230,7 @@ const bookTrip = async (req, res) => {
         if (global.io) {
             global.io.emit('get-trips', { trips: tripsSocket });
         }
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(200).json({booking: updatedBooking,availableDrivers});
-        }
+
         // Return the updated booking and available drivers
         return res.status(200).json({
             booking: updatedBooking,
@@ -237,6 +242,7 @@ const bookTrip = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
 
 const newApi = async function(req, res) {
     const id = req.params.id;
