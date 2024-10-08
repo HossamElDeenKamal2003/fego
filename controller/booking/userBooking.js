@@ -1546,7 +1546,7 @@ const getTripDriver = async function(req, res) {
         const tripsPending = [];
 
         // Get the max allowed distance
-        const distancee = await DistanceModel.findOne({ _id: "66cc4dd383ebb7ad1147a518" });
+        const distancee = await distance.findOne({ _id: "66cc4dd383ebb7ad1147a518" });
         if (!distancee || !distancee.maxDistance) {
             return res.status(500).json({ message: 'Distance model not found or invalid' });
         }
