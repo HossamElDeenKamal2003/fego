@@ -1531,8 +1531,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
     return earthRadiusKm * c * 1000; // Return distance in meters
 }
-const getTripDriver = async function() {
-    const driverId = req.params.id;
+const getTripDriver = async function(driverId) {
+    //const driverId = req.params.id;
     try {
         // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
