@@ -1521,10 +1521,10 @@ const getTripDriver = async function(req, res) {
         // Convert trips to plain JavaScript objects for WebSocket emission
         const tripsSocket = trips.map(trip => trip.toObject());
 
-        // Emit trips to WebSocket clients
-        // if (global.io) {
-        //     global.io.emit('get-trips', { trips: tripsSocket });
-        // }
+        //Emit trips to WebSocket clients
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
 
         // Send response to the client who made the HTTP request
         res.status(200).json({ trips });
