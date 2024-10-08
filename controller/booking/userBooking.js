@@ -1531,15 +1531,15 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
     return earthRadiusKm * c * 1000; // Return distance in meters
 }
-const getTripDriver = async function(req, res) {
-    const id = req.params.id;
+const getTripDriver = async function() {
+    const driverId = req.params.id;
     try {
         // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
-
-        const driver = await DestDriver.findOne({ driverId: id });
+        const driver = await DestDriver.findOne({ driverId: driverId });
         if (!driver || !driver.location || !driver.location.coordinates) {
-            return res.status(404).json({ message: 'Driver or location not found' });
+            console.error('Driver or location not found');
+            return;
         }
 
         const driverLocationLongitude = driver.location.coordinates[0];
@@ -1550,7 +1550,8 @@ const getTripDriver = async function(req, res) {
         // Get the max allowed distance
         const distancee = await distance.findOne({ _id: "66cc4dd383ebb7ad1147a518" });
         if (!distancee || !distancee.maxDistance) {
-            return res.status(500).json({ message: 'Distance model not found or invalid' });
+            console.error('Distance model not found or invalid');
+            return;
         }
 
         console.log(driverLocationLongitude, ' .....', driverLocationLatitude);
@@ -1563,7 +1564,6 @@ const getTripDriver = async function(req, res) {
             // Calculate the distance between driver and pickup location
             let calculatedDistance = calculateDistance(driverLocationLatitude, driverLocationLongitude, latitude, longitude);
 
-            // Log calculated distance and maxDistance for debugging
             console.log(`Trip ${i}: Calculated distance = ${calculatedDistance} meters`);
             console.log(`Max allowed distance = ${distancee.maxDistance} meters`);
 
@@ -1574,23 +1574,15 @@ const getTripDriver = async function(req, res) {
         }
         console.log(tripsPending.length);
 
-        // Convert tripsPending to plain JavaScript objects for WebSocket emission
-        //const tripsSocket = tripsPending.map(trip => trip.toObject());
-
-        // Emit trips to WebSocket clients
+        // Emit the tripsPending data to WebSocket clients
         if (global.io) {
-            global.io.emit('get-trips', { trips: tripsPending });
+            global.io.emit('get-trips-driver', { trips: tripsPending });
         }
 
-        // Send response to the client who made the HTTP request
-        res.status(200).json({ trips: tripsPending });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
+        console.error('Error in getTripDriver:', error);
     }
 };
-
-
 
 const offer = async function (req, res) {
     const { offer, driverId, time, distance, tripId, userId } = req.body;
