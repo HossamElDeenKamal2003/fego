@@ -1,5 +1,5 @@
 // tripsPending.js
-const getTripDriver = require('./userBooking'); // Ensure this path is also correct
+const {getTripDriver} = require('./userBooking'); // Ensure this path is also correct
 
 const handleSocketConnection = (io) => {
     io.on('connection', (socket) => {
