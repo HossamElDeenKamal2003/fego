@@ -1570,17 +1570,18 @@ const getTripDriver = async function(req, res) {
                 tripsPending.push(trip); // Only add trips within the max distance
             }
         }
+        console.log(tripsPending.length);
 
         // Convert tripsPending to plain JavaScript objects for WebSocket emission
-        const tripsSocket = tripsPending.map(trip => trip.toObject());
+        //const tripsSocket = tripsPending.map(trip => trip.toObject());
 
         // Emit trips to WebSocket clients
         if (global.io) {
-            global.io.emit(`get-trips/${id}`, { trips: tripsSocket });
+            global.io.emit(`get-trips/${id}`, { trips: tripsPending });
         }
 
         // Send response to the client who made the HTTP request
-        res.status(200).json({ trips: tripsSocket });
+        res.status(200).json({ trips: tripsPending });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
