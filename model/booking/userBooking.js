@@ -113,6 +113,9 @@ const bookingSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    duration: {
+        type: String
+    }
 });
 
 // Create a 2dsphere index on the pickupLocation field
