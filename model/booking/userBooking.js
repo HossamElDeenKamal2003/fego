@@ -115,6 +115,9 @@ const bookingSchema = new mongoose.Schema({
     },
     duration: {
         type: String
+    },
+    encodedPolyline: {
+        type: String
     }
 });
 
