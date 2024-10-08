@@ -1577,7 +1577,7 @@ const getTripDriver = async function(req, res) {
 
         // Emit trips to WebSocket clients
         if (global.io) {
-            global.io.emit(`get-trips/${id}`, { trips: tripsPending });
+            global.io.emit('get-trips', { trips: tripsPending });
         }
 
         // Send response to the client who made the HTTP request
