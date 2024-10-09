@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Replace with your PayTabs merchant details
-const PAYTABS_BASE_URL = 'https://merchant-egypt.PayTabs.com'; 
+const PAYTABS_BASE_URL = 'https://merchant-egypt.PayTabs.com'; // Egyptian region
 const SERVER_KEY = 'SMJ9NJNMKR-JJWL2MBMTZ-GGTWRWK2ZBCBK2M9-2P9966-VBMN2N-BQDDBH';
 
 // Endpoint to initiate payment
