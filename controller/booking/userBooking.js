@@ -21,13 +21,82 @@ const minValue = require('../../model/booking/minCharge.js');
 const offerModel = require('../../model/booking/offers.js');
 const Conversation =require('../../model/booking/chating/conversation.js');
 const Message = require ('../../model/booking/chating/newChatModel.js');
-const distance = require('../../model/booking/maxDistance.js');
 let connectedClients = {};
 
 async function deleteFromAcceptedModel(tripId) {
     const trip = await acceptedModel.findOneAndDelete({ tripId: tripId });
     return { message: 'Document Deleted Successfully' };
 }
+
+// const tripsHandler = (io) => {
+//     io.on('connection', (socket) => {
+//         console.log('Client connected');
+
+//         socket.on('bookTrip', async () => {
+//             try {
+//                 // Get all trips with status 'pending'
+//                 const trips = await bookModel.find({ status: 'pending' });
+
+//                 // Get all drivers with location details
+//                 const drivers = await DestDriver.find({});
+
+//                 // Loop through each driver to find nearby trips
+//                 for (const driver of drivers) {
+//                     if (!driver || !driver.location || !driver.location.coordinates) {
+//                         console.log(`Driver with ID ${driver.driverId} not found or location data is missing`);
+//                         continue;
+//                     }
+
+//                     const [driverLongitude, driverLatitude] = driver.location.coordinates;
+
+//                     // Filter trips based on proximity to the driver's location
+//                     const nearbyTrips = trips.filter((trip) => {
+//                         if (!trip.pickupLocation || !trip.pickupLocation.coordinates) {
+//                             return false;
+//                         }
+
+//                         const [tripLongitude, tripLatitude] = trip.pickupLocation.coordinates;
+
+//                         // Calculate distance between driver and trip pickup location
+//                         const distance = calculateDistance(driverLatitude, driverLongitude, tripLatitude, tripLongitude);
+
+//                         // Get the maximum allowable distance from the settings
+//                         const maxDistance = 5000; // Default to 5km if no specific setting
+
+//                         return distance <= maxDistance;
+//                     });
+
+//                     // If there are nearby trips, send them to the driver
+//                     if (nearbyTrips.length > 0) {
+//                         const tripsSocket = nearbyTrips.map((trip) => trip.toObject());
+//                         socket.emit(`get-trips-socket/${driver.driverId}`, { trips: tripsSocket });
+//                     }
+//                 }
+//             } catch (error) {
+//                 console.log('Error:', error);
+//             }
+//         });
+//     });
+// };
+
+// Helper function to calculate distance between two coordinates using the Haversine formula
+// function calculateDistance(lat1, lon1, lat2, lon2) {
+//     const toRadians = (degree) => (degree * Math.PI) / 180;
+//     const earthRadiusKm = 6371;
+
+//     const dLat = toRadians(lat2 - lat1);
+//     const dLon = toRadians(lon2 - lon1);
+
+//     const a =
+//         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+//         Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+//     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+//     return earthRadiusKm * c * 1000; // Return distance in meters
+// }
+
+//module.exports = tripsHandler;
 
 const findDrivers = async (vehicleType, latitude, longitude) => {
     if (!vehicleType || latitude === undefined || longitude === undefined) {
@@ -121,137 +190,11 @@ const getDistance = async function(req, res){
 }
 
 // Book a trip
-// const bookTrip = async (req, res) => {
-//     const {
-//         id, distance, username, driverId, destination, latitude, longitude,
-//         destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
-//         locationName, uniqueId, comment, arrivingTime, comfort, duration, encodedPolyline
-//     } = req.body;
-
-//     try {
-//         // Validate input
-//         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined || !locationName) {
-//             return res.status(400).json({ message: 'Missing required fields' });
-//         }
-
-//         // Create new booking with status 'pending'
-//         const newBooking = new bookModel({
-//             userId: id,
-//             distance: distance,
-//             driverId,
-//             uniqueId,
-//             pickupLocationName: pickupLocationName,
-//             time: time,
-//             locationName: locationName,
-//             username: username,
-//             destination: destination,
-//             vehicleType: vehicleType,
-//             pickupLocation: {
-//                 type: "Point",
-//                 coordinates: [longitude, latitude] 
-//             },
-//             destinationLocation: {
-//                 type: "Point",
-//                 coordinates: [destlongtitude, destlatitude]
-//             },
-//             cost: cost,
-//             status: 'pending', // Initial status
-//             comment,
-//             arrivingTime,
-//             comfort,
-//             duration: duration || "",
-//             encodedPolyline: encodedPolyline || ""
-//         });
-
-//         const savedBooking = await newBooking.save();
-
-//         // Save in pending model
-//         const pending = new pendingModel({
-//             userId: id,
-//             distance: distance,
-//             driverId,
-//             uniqueId,
-//             pickupLocationName: pickupLocationName,
-//             time: time,
-//             locationName: locationName,
-//             username: username,
-//             destination: destination,
-//             vehicleType: vehicleType,
-//             pickupLocation: {
-//                 type: "Point",
-//                 coordinates: [longitude, latitude]
-//             },
-//             destinationLocation: {
-//                 type: "Point",
-//                 coordinates: [destlongtitude, destlatitude]
-//             },
-//             cost: cost,
-//             status: 'pending',
-//             comment: "",
-//             arrivingTime,
-//             comfort,
-//             duration,
-//             encodedPolyline: encodedPolyline || ""
-//         });
-//         await pending.save();
-
-//         // Find drivers using the findDrivers function
-//         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
-        
-//         if(availableDrivers || availableDrivers.length !== 0){
-//             console.log('Available Drivers:', availableDrivers);
-
-//         // Send notification to all available drivers
-//         for (const driver of availableDrivers) {
-//             // Check if the driver has an FCM token saved in the database
-//             const driverFCMToken = driver.driverFCMToken;
-
-//             if (driverFCMToken) {
-//                 const notificationMessage = {
-//                     title: 'New Trip Available',
-//                     body: `A new trip to ${destination} is available for you.`,
-//                 };
-
-//                 // Send the FCM notification to the driver
-//                 sendNotification(driverFCMToken, notificationMessage);
-//             } else {
-//                 console.log(`Driver ${driver.username} does not have an FCM token.`);
-//             }
-//         } 
-
-//         }
-//         // Debugging: Log available drivers and their details
-        
-//         // Update booking status to 'pending'
-//         savedBooking.status = 'pending';
-//         const updatedBooking = await savedBooking.save();
-//         if (!availableDrivers || availableDrivers.length === 0) {
-//             return res.status(404).json({ booking: updatedBooking });
-//         }
-//         const trips = await bookModel.find({ status: 'pending' });
-//         const tripsSocket = trips.map(trip => trip.toObject());
-//         // if (global.io) {
-//         //     global.io.emit('get-trips', { trips: tripsSocket });
-//         // }
-//         getTripDriver()
-
-//         // Return the updated booking and available drivers
-//         return res.status(200).json({
-//             booking: updatedBooking,
-//             availableDrivers
-//         });
-
-//     } catch (error) {
-//         console.log(error); 
-//         return res.status(500).json({ message: error.message });
-//     }
-// };
-
 const bookTrip = async (req, res) => {
     const {
         id, distance, username, driverId, destination, latitude, longitude,
         destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
-        locationName, uniqueId, comment, arrivingTime, comfort, duration, encodedPolyline
+        locationName, uniqueId, comment, arrivingTime, comfort
     } = req.body;
 
     try {
@@ -274,7 +217,7 @@ const bookTrip = async (req, res) => {
             vehicleType: vehicleType,
             pickupLocation: {
                 type: "Point",
-                coordinates: [longitude, latitude]
+                coordinates: [longitude, latitude] 
             },
             destinationLocation: {
                 type: "Point",
@@ -284,9 +227,7 @@ const bookTrip = async (req, res) => {
             status: 'pending', // Initial status
             comment,
             arrivingTime,
-            comfort,
-            duration: duration || "",
-            encodedPolyline: encodedPolyline || ""
+            comfort
         });
 
         const savedBooking = await newBooking.save();
@@ -315,46 +256,50 @@ const bookTrip = async (req, res) => {
             status: 'pending',
             comment: "",
             arrivingTime,
-            comfort,
-            duration,
-            encodedPolyline: encodedPolyline || ""
+            comfort
         });
         await pending.save();
 
         // Find drivers using the findDrivers function
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
         
-        if (availableDrivers && availableDrivers.length !== 0) {
+        if(availableDrivers || availableDrivers.length !== 0){
             console.log('Available Drivers:', availableDrivers);
 
-            // Send notification to all available drivers
-            for (const driver of availableDrivers) {
-                const driverFCMToken = driver.driverFCMToken;
+        // Send notification to all available drivers
+        for (const driver of availableDrivers) {
+            // Check if the driver has an FCM token saved in the database
+            const driverFCMToken = driver.driverFCMToken;
 
-                if (driverFCMToken) {
-                    const notificationMessage = {
-                        title: 'New Trip Available',
-                        body: `A new trip to ${destination} is available for you.`,
-                    };
+            if (driverFCMToken) {
+                const notificationMessage = {
+                    title: 'New Trip Available',
+                    body: `A new trip to ${destination} is available for you.`,
+                };
 
-                    sendNotification(driverFCMToken, notificationMessage);
-                } else {
-                    console.log(`Driver ${driver.username} does not have an FCM token.`);
-                }
+                // Send the FCM notification to the driver
+                sendNotification(driverFCMToken, notificationMessage);
+            } else {
+                console.log(`Driver ${driver.username} does not have an FCM token.`);
             }
+        } 
 
-            // After finding available drivers, call getTripDriver with the driverId
-            await getTripDriver(driverId);
         }
-
+        // Debugging: Log available drivers and their details
+        
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
-
         if (!availableDrivers || availableDrivers.length === 0) {
             return res.status(404).json({ booking: updatedBooking });
         }
+        const trips = await bookModel.find({ status: 'pending' });
+        const tripsSocket = trips.map(trip => trip.toObject());
+        if (global.io) {
+            global.io.emit('get-trips', { trips: tripsSocket });
+        }
 
+        // Return the updated booking and available drivers
         return res.status(200).json({
             booking: updatedBooking,
             availableDrivers
@@ -365,7 +310,6 @@ const bookTrip = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
-
 
 const newApi = async function(req, res) {
     const id = req.params.id;
@@ -1637,71 +1581,26 @@ const handleArrivingTime = async function(req, res){
     }
 }
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const toRadians = (degree) => (degree * Math.PI) / 180;
-    const earthRadiusKm = 6371;
-
-    const dLat = toRadians(lat2 - lat1);
-    const dLon = toRadians(lon2 - lon1);
-
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return earthRadiusKm * c * 1000; // Return distance in meters
-}
-const getTripDriver = async function(driverId) {
+const getTripDriver = async function(req, res) {
     try {
         // Find all trips with 'pending' status
         const trips = await bookModel.find({ status: 'pending' });
 
-        const driver = await DestDriver.findOne({ driverId: driverId });
-        if (!driver || !driver.location || !driver.location.coordinates) {
-            console.error('Driver or location not found');
-            return;
-        }
-
-        const driverLocationLongitude = driver.location.coordinates[0];
-        const driverLocationLatitude = driver.location.coordinates[1];
-
-        const tripsPending = [];
-
-        // Get the max allowed distance
-        const distancee = await distance.findOne({ _id: "66cc4dd383ebb7ad1147a518" });
-        if (!distancee || !distancee.maxDistance) {
-            console.error('Distance model not found or invalid');
-            return;
-        }
-
-        console.log(driverLocationLongitude, ' .....', driverLocationLatitude);
-
-        for (let i = 0; i < trips.length; i++) {
-            let trip = trips[i];
-            let longitude = trip.pickupLocation.coordinates[0];
-            let latitude = trip.pickupLocation.coordinates[1];
-
-            // Calculate the distance between driver and pickup location
-            let calculatedDistance = calculateDistance(driverLocationLatitude, driverLocationLongitude, latitude, longitude);
-
-            // Compare the calculated distance with the maximum allowed distance
-            if (calculatedDistance <= distancee.maxDistance) {
-                tripsPending.push(trip); // Only add trips within the max distance
-            }
-        }
-        console.log(tripsPending.length);
+        // Convert trips to plain JavaScript objects for WebSocket emission
+        const tripsSocket = trips.map(trip => trip.toObject());
 
         // Emit trips to WebSocket clients
-        if (global.io) {
-            global.io.emit('get-trips-driver', { trips: tripsPending });
-        }
+        // if (global.io) {
+        //     global.io.emit('get-trips', { trips: tripsSocket });
+        // }
+
+        // Send response to the client who made the HTTP request
+        res.status(200).json({ trips });
     } catch (error) {
-        console.error('Error in getTripDriver:', error);
+        console.error(error);
+        res.status(500).json({ message: 'INTERNAL SERVER ERROR' });
     }
 };
-
-
 
 
 const offer = async function (req, res) {
@@ -1864,5 +1763,4 @@ module.exports = {
     getTripDriver,
     offer,
     chating,
-
 };
