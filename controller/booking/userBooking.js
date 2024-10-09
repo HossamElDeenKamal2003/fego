@@ -194,7 +194,7 @@ const bookTrip = async (req, res) => {
     const {
         id, distance, username, driverId, destination, latitude, longitude,
         destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
-        locationName, uniqueId, comment, arrivingTime, comfort
+        locationName, uniqueId, comment, arrivingTime, comfort, duration, encodedPolyline
     } = req.body;
 
     try {
@@ -227,7 +227,9 @@ const bookTrip = async (req, res) => {
             status: 'pending', // Initial status
             comment,
             arrivingTime,
-            comfort
+            comfort,
+            duration: duration || "",
+            encodedPolyline: encodedPolyline | ""
         });
 
         const savedBooking = await newBooking.save();
@@ -256,7 +258,9 @@ const bookTrip = async (req, res) => {
             status: 'pending',
             comment: "",
             arrivingTime,
-            comfort
+            comfort,
+            duration: duration || "",
+            encodedPolyline: encodedPolyline | ""
         });
         await pending.save();
 
