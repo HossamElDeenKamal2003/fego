@@ -121,6 +121,130 @@ const getDistance = async function(req, res){
 }
 
 // Book a trip
+// const bookTrip = async (req, res) => {
+//     const {
+//         id, distance, username, driverId, destination, latitude, longitude,
+//         destlatitude, destlongtitude, cost, pickupLocationName, time, vehicleType,
+//         locationName, uniqueId, comment, arrivingTime, comfort, duration, encodedPolyline
+//     } = req.body;
+
+//     try {
+//         // Validate input
+//         if (!id || !distance || !username || !destination || latitude === undefined || longitude === undefined || !locationName) {
+//             return res.status(400).json({ message: 'Missing required fields' });
+//         }
+
+//         // Create new booking with status 'pending'
+//         const newBooking = new bookModel({
+//             userId: id,
+//             distance: distance,
+//             driverId,
+//             uniqueId,
+//             pickupLocationName: pickupLocationName,
+//             time: time,
+//             locationName: locationName,
+//             username: username,
+//             destination: destination,
+//             vehicleType: vehicleType,
+//             pickupLocation: {
+//                 type: "Point",
+//                 coordinates: [longitude, latitude] 
+//             },
+//             destinationLocation: {
+//                 type: "Point",
+//                 coordinates: [destlongtitude, destlatitude]
+//             },
+//             cost: cost,
+//             status: 'pending', // Initial status
+//             comment,
+//             arrivingTime,
+//             comfort,
+//             duration: duration || "",
+//             encodedPolyline: encodedPolyline || ""
+//         });
+
+//         const savedBooking = await newBooking.save();
+
+//         // Save in pending model
+//         const pending = new pendingModel({
+//             userId: id,
+//             distance: distance,
+//             driverId,
+//             uniqueId,
+//             pickupLocationName: pickupLocationName,
+//             time: time,
+//             locationName: locationName,
+//             username: username,
+//             destination: destination,
+//             vehicleType: vehicleType,
+//             pickupLocation: {
+//                 type: "Point",
+//                 coordinates: [longitude, latitude]
+//             },
+//             destinationLocation: {
+//                 type: "Point",
+//                 coordinates: [destlongtitude, destlatitude]
+//             },
+//             cost: cost,
+//             status: 'pending',
+//             comment: "",
+//             arrivingTime,
+//             comfort,
+//             duration,
+//             encodedPolyline: encodedPolyline || ""
+//         });
+//         await pending.save();
+
+//         // Find drivers using the findDrivers function
+//         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
+        
+//         if(availableDrivers || availableDrivers.length !== 0){
+//             console.log('Available Drivers:', availableDrivers);
+
+//         // Send notification to all available drivers
+//         for (const driver of availableDrivers) {
+//             // Check if the driver has an FCM token saved in the database
+//             const driverFCMToken = driver.driverFCMToken;
+
+//             if (driverFCMToken) {
+//                 const notificationMessage = {
+//                     title: 'New Trip Available',
+//                     body: `A new trip to ${destination} is available for you.`,
+//                 };
+
+//                 // Send the FCM notification to the driver
+//                 sendNotification(driverFCMToken, notificationMessage);
+//             } else {
+//                 console.log(`Driver ${driver.username} does not have an FCM token.`);
+//             }
+//         } 
+
+//         }
+//         // Debugging: Log available drivers and their details
+        
+//         // Update booking status to 'pending'
+//         savedBooking.status = 'pending';
+//         const updatedBooking = await savedBooking.save();
+//         if (!availableDrivers || availableDrivers.length === 0) {
+//             return res.status(404).json({ booking: updatedBooking });
+//         }
+//         const trips = await bookModel.find({ status: 'pending' });
+//         const tripsSocket = trips.map(trip => trip.toObject());
+//         if (global.io) {
+//             global.io.emit('get-trips', { trips: tripsSocket });
+//         }
+
+//         // Return the updated booking and available drivers
+//         return res.status(200).json({
+//             booking: updatedBooking,
+//             availableDrivers
+//         });
+
+//     } catch (error) {
+//         console.log(error); 
+//         return res.status(500).json({ message: error.message });
+//     }
+// };
 const bookTrip = async (req, res) => {
     const {
         id, distance, username, driverId, destination, latitude, longitude,
@@ -198,42 +322,39 @@ const bookTrip = async (req, res) => {
         // Find drivers using the findDrivers function
         const availableDrivers = await findDrivers(vehicleType, latitude, longitude);
         
-        if(availableDrivers || availableDrivers.length !== 0){
+        if(availableDrivers && availableDrivers.length > 0){
             console.log('Available Drivers:', availableDrivers);
 
-        // Send notification to all available drivers
-        for (const driver of availableDrivers) {
-            // Check if the driver has an FCM token saved in the database
-            const driverFCMToken = driver.driverFCMToken;
+            // Send notification to all available drivers
+            for (const driver of availableDrivers) {
+                // Check if the driver has an FCM token saved in the database
+                const driverFCMToken = driver.driverFCMToken;
 
-            if (driverFCMToken) {
-                const notificationMessage = {
-                    title: 'New Trip Available',
-                    body: `A new trip to ${destination} is available for you.`,
-                };
+                if (driverFCMToken) {
+                    const notificationMessage = {
+                        title: 'New Trip Available',
+                        body: `A new trip to ${destination} is available for you.`,
+                    };
 
-                // Send the FCM notification to the driver
-                sendNotification(driverFCMToken, notificationMessage);
-            } else {
-                console.log(`Driver ${driver.username} does not have an FCM token.`);
+                    // Send the FCM notification to the driver
+                    sendNotification(driverFCMToken, notificationMessage);
+                } else {
+                    console.log(`Driver ${driver.username} does not have an FCM token.`);
+                }
+
+                // Emit `get-trips` event to this specific driver via WebSocket
+                if (global.io && driver._id) {
+                    global.io.emit(`getTrips/${driver._id}`, { trips: [savedBooking.toObject()] });
+                }
             }
-        } 
-
         }
+
         // Debugging: Log available drivers and their details
         
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
-        if (!availableDrivers || availableDrivers.length === 0) {
-            return res.status(404).json({ booking: updatedBooking });
-        }
-        const trips = await bookModel.find({ status: 'pending' });
-        const tripsSocket = trips.map(trip => trip.toObject());
-        if (global.io) {
-            global.io.emit('get-trips', { trips: tripsSocket });
-        }
-
+        
         // Return the updated booking and available drivers
         return res.status(200).json({
             booking: updatedBooking,
@@ -245,6 +366,7 @@ const bookTrip = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
+
 
 const newApi = async function(req, res) {
     const id = req.params.id;
