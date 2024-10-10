@@ -78,7 +78,7 @@ const userSearches = new Map(); // Map<socketId, searchCriteria>
 
 const locationHandler = require('./controller/booking/driverDest'); // Adjust the path as necessary
 const costHandler = require('./controller/booking/costUpdate');
-const tripsHandler = require('./controller/booking/tripsPending');
+const handleSocketConnection = require('./controller/booking/tripsPending');
 offerController.setSocketInstance(io);
 
 // Initialize WebSocket handler
@@ -91,7 +91,7 @@ chatHandler(io);
 //tripStatusHandler(io);
 driverDataHandler(io);
 locationHandler(io) // Attaches the socket instance to the HTTP server
-tripsHandler(io);
+handleSocketConnection(io);
 //updateLocation(io);
 
 global.io = io;
@@ -113,7 +113,91 @@ app.get("/", (req, res) => {
 });
 app.get('/home', (req, res)=>{
     
-})
+});
+const PayTabs = require('paytabs_pt2');
+
+const profileID = process.env.PAYTABS_PROFILE_ID;
+const serverKey = process.env.PAYTABS_SERVER_KEY;
+const region = "EGY";
+
+PayTabs.setConfig(profileID, serverKey, region);
+
+// Payment Endpoint
+app.post('/create-payment', (req, res) => {
+    // Payment Details
+    let paymentMethods = ["all"];
+    let transaction = {
+        type: "sale",
+        class: "ecom"
+    };
+    let cart = {
+        id: "4111 1111 1111 1111",
+        currency: "EGP",
+        amount: 100.00,
+        description: "Order description"
+    };
+
+    // Customer Details from the request body
+    let customer = req.body.customer;
+
+    if (!customer) {
+        return res.status(400).json({ error: "Customer details are required." });
+    }
+
+    // Response URLs
+    let response_URLs = [
+        "https://fliegertechnology-production-6024.up.railway.app/response",
+        "https://fliegertechnology-production-6024.up.railway.app/callback"
+    ];
+
+    // Language setting
+    let lang = "ar";
+
+    // Callback for payment page creation
+    function paymentPageCreated(results) {
+        console.log('PayTabs Response:', results); 
+        if (results && results.payment_url) {
+            res.json({ payment_url: results.payment_url });
+        } else {
+            console.log(results.error)
+            console.log('Request Headers:', {
+                'Authorization': `Bearer ${serverKey}`,
+                'Content-Type': 'application/json'
+            });
+            
+            res.status(400).json({ error: results.error || "Failed to create payment page." });
+        }
+    }
+
+    // Create Payment Page
+    PayTabs.createPaymentPage(
+        paymentMethods,
+        [transaction.type, transaction.class],
+        [cart.id, cart.currency, cart.amount, cart.description],
+        [customer.name, customer.email, customer.phone, customer.street, customer.city, customer.state, customer.country, customer.zip, customer.IP],
+        [], // Shipping address (optional)
+        response_URLs,
+        lang,
+        paymentPageCreated,
+        {
+            'Authorization': `Bearer SMJ9NJNMKR-JJWL2MBMTZ-GGTWRWK2ZBCBK2M9-2P9966-VBMN2N-BQDDBH`,  // Authorization header
+            'Content-Type': 'application/json'
+        }
+    );
+});
+
+// Handle Payment Response
+app.get('/response', (req, res) => {
+    console.log(req.query);
+    res.send("Payment Response Received");
+});
+
+// Handle Callback from PayTabs
+app.post('/callback', (req, res) => {
+    console.log(req.body);
+    res.send("Callback Received");
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

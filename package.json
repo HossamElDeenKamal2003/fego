@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Hossam ElDeen Kamal",
   "license": "ISC",
@@ -28,9 +28,15 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemon": "^3.1.4",
+    "paytabs_pt2": "^2.0.10",
     "sharp": "^0.33.4",
     "slugify": "^1.6.6",
     "socket.io": "^4.7.5",
     "twilio": "^5.2.2"
+  },
+  "devDependencies": {
+    "chai": "^5.1.1",
+    "mocha": "^10.7.3",
+    "supertest": "^7.0.0"
   }
 }
