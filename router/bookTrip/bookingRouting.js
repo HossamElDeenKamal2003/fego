@@ -83,7 +83,7 @@ router.get('/get-user-wallet/:id', getUserWallet);
 router.get('/new-api/:id', newApi);
 router.post('/get-accepted', getAcceptModel);
 router.post('/see-trip', seeTrip);
-router.post('/pay-tabs', paytabs);
+//router.post('/pay-tabs', paytabs);
 router.post('/add-accepted', addAcceptedTrip);
 router.get('/get-accepted-driver/:id', getAccepted);
 router.patch('/driver-cancelled', driverCancel);
