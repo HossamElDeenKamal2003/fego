@@ -343,14 +343,13 @@ const bookTrip = async (req, res) => {
                 }
 
                 // Emit `get-trips` event to this specific driver via WebSocket
-                if (global.io && driver._id) {
-                    global.io.emit(`getTrips/${driver._id}`, { trips: [savedBooking.toObject()] });
+                if (global.io && driver.driverId) {
+                    global.io.emit(`getTrips/${driver.driverId}`, { trips: [savedBooking.toObject()] });
                 }
             }
         }
 
         // Debugging: Log available drivers and their details
-        
         // Update booking status to 'pending'
         savedBooking.status = 'pending';
         const updatedBooking = await savedBooking.save();
