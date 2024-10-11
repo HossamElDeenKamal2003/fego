@@ -344,6 +344,7 @@ const bookTrip = async (req, res) => {
 
                 // Emit `get-trips` event to this specific driver via WebSocket
                 if (global.io && driver.driverId) {
+                    console.log("distance");
                     global.io.emit(`getTrips/${driver.driverId}`, { trips: [savedBooking.toObject()] });
                 }
             }
