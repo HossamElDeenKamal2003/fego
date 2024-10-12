@@ -90,6 +90,9 @@ const driverSchema = new mongoose.Schema({
     },
     national_selfie:{
         type: String
+    },
+    comments: {
+        type: [String]
     }
 });
 
