@@ -23,6 +23,7 @@ const signup = async function(req, res) {
             longitude,
             driverFCMToken,
             wallet,
+            comments
             
         } = req.body;
 
@@ -67,6 +68,7 @@ const signup = async function(req, res) {
             national_front,
             national_back,
             national_selfie,
+            comments: comments || []
         });
 
         await newDriver.save();
@@ -81,6 +83,7 @@ const signup = async function(req, res) {
             carColor: newDriver.carColor,
             vehicleType: newDriver.vehicleType,
             wallet: 0,
+            comments: comments || [],
             location: {
                 type: "Point",
                 coordinates: [longitude, latitude]
@@ -114,6 +117,7 @@ const signup = async function(req, res) {
                 national_front,
                 national_back,
                 national_selfie,
+                comments
             }
         });
     } catch (error) {

@@ -120,6 +120,28 @@ const getDistance = async function(req, res){
     }
 }
 
+const addCommentDriver = async function(req, res) {
+    const { id, comment } = req.body;
+    try {
+        const driver = await Driver.findOne({ _id: id });
+        if (!driver) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+        // Push the new comment to the array
+        driver.comments.push(comment);
+
+        // Save the updated driver document
+        await driver.save();
+
+        // Respond with a success message
+        res.status(200).json({ message: "Comment added successfully", driver });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 // Book a trip
 // const bookTrip = async (req, res) => {
 //     const {
@@ -1818,5 +1840,6 @@ module.exports = {
     getTripDriver,
     offer,
     chating,
+    addCommentDriver
 
 };
