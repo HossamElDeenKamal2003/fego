@@ -1,70 +1,91 @@
-// const paytabsModel = require('../../../model/banking/paytabs');
-// const PayTabs = require('paytabs_pt2');
+// const https = require('https');
+// const { URL } = require('url');
 
-// // PayTabs Configuration
-// let profileID = "STJ9NJNMKN-JJWL2MDDHK-KZDJJG9JGT CKK2M9-2P9766-VBMNDD-QNR6DD";
-// let serverKey = "SMJ9NJNMKR-JJWL2MBMTZ-GGTWRWK2ZBCBK2M9-2P9966-VBMN2N-BQDDBH";
-// let region = "EGY";
+// class Paytabs {
+//     static PROFILE_ID = "STJ9NJNMKN-JJWL2MDDHK-KZDJJG9JGTCKK2M9-2P9766-VBMNDD-QNR6DD";
+//     static SERVER_KEY = 'SMJ9NJNMKR-JJWL2MBMTZ-GGTWRWK2ZBCBK2M9-2P9966-VBMN2N-BQDDBH';
+//     static BASE_URL = 'https://secure-egypt.paytabs.com/';
 
-// PayTabs.setConfig(profileID, serverKey, region);
+//     // Method to send API request
+//     sendApiRequest(requestUrl, data, requestMethod = 'POST') {
+//         return new Promise((resolve, reject) => {
+//             data.profile_id = Paytabs.PROFILE_ID;
 
-// // Payment Details
-// let paymentMethods = ["all"];
-// let transaction = {
-//     type: "sale", // Transaction type
-//     class: "ecom" // Transaction class
-// };
-// let cart = {
-//     id: "12345", // Replace with actual cart ID
-//     currency: "EGP", // Currency code
-//     amount: 100.00, // Amount to charge
-//     description: "Order description" // Description of the order
-// };
+//             const options = {
+//                 hostname: new URL(Paytabs.BASE_URL).hostname,
+//                 path: requestUrl,
+//                 method: requestMethod,
+//                 headers: {
+//                     'Authorization': Paytabs.SERVER_KEY,
+//                     'Content-Type': 'application/json'
+//                 }
+//             };
 
-// // Customer Details
-// let customer = {
-//     name: "John Doe", // Customer's name
-//     email: "john@example.com", // Customer's email
-//     phone: "+201234567890", // Customer's phone number
-//     street: "123 Main St", // Customer's street
-//     city: "Cairo", // Customer's city
-//     state: "Cairo", // Customer's state
-//     country: "EGY", // Customer's country
-//     zip: "12345", // Customer's ZIP code
-//     IP: "192.168.1.1" // Customer's IP address
-// };
+//             const req = https.request(options, (res) => {
+//                 let responseBody = '';
 
-// // Shipping Address (if different from customer details)
-// let shipping_address = [
-//     customer.street,
-//     customer.city,
-//     customer.state,
-//     customer.country,
-//     customer.zip
-// ];
+//                 res.on('data', (chunk) => {
+//                     responseBody += chunk;
+//                 });
 
-// // Response URLs
-// let response_URLs = [
-//     "https://yourdomain.com/response", // URL to handle response
-//     "https://yourdomain.com/callback"  // URL for asynchronous callback
-// ];
+//                 res.on('end', () => {
+//                     resolve(JSON.parse(responseBody));
+//                 });
+//             });
 
-// // Language setting
-// let lang = "ar"; // Arabic language
+//             req.on('error', (error) => {
+//                 reject(error);
+//             });
 
-// // Callback for payment page creation
-// function paymentPageCreated($results) {
-//     console.log($results);
+//             // Send JSON data
+//             req.write(JSON.stringify(data));
+//             req.end();
+//         });
+//     }
+
+//     // Method to get the base URL
+//     getBaseUrl(req) {
+//         const currentPath = req.url;
+//         const hostName = req.headers.host;
+//         const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+
+//         // Return: http://localhost/myproject/
+//         return `${protocol}://${hostName}${currentPath}`;
+//     }
+
+//     // Method to validate the redirect
+//     isValidRedirect(postValues) {
+//         const serverKey = Paytabs.SERVER_KEY;
+
+//         // Request body include a signature post Form URL encoded field
+//         const requestSignature = postValues.signature;
+//         delete postValues.signature;
+
+//         const fields = Object.fromEntries(Object.entries(postValues).filter(([_, v]) => v !== null && v !== undefined));
+
+//         // Sort form fields
+//         const sortedFields = Object.keys(fields).sort().reduce((obj, key) => {
+//             obj[key] = fields[key];
+//             return obj;
+//         }, {});
+
+//         // Generate URL-encoded query string of Post fields except signature field.
+//         const query = new URLSearchParams(sortedFields).toString();
+//         const signature = this.hashHmac('sha256', query, serverKey);
+
+//         return this.hashEquals(signature, requestSignature);
+//     }
+
+//     // Helper method to generate HMAC
+//     hashHmac(algorithm, data, key) {
+//         const crypto = require('crypto');
+//         return crypto.createHmac(algorithm, key).update(data).digest('hex');
+//     }
+
+//     // Helper method to compare two hashes in a constant time
+//     hashEquals(hash1, hash2) {
+//         return crypto.timingSafeEqual(Buffer.from(hash1, 'hex'), Buffer.from(hash2, 'hex'));
+//     }
 // }
 
-// // Create Payment Page
-// PayTabs.createPaymentPage(
-//     paymentMethods,
-//     [transaction.type, transaction.class], // Transaction details as array
-//     [cart.id, cart.currency, cart.amount, cart.description], // Cart details as array
-//     [customer.name, customer.email, customer.phone, customer.street, customer.city, customer.state, customer.country, customer.zip, customer.IP], // Customer details as array
-//     shipping_address, // Shipping address
-//     response_URLs, // Response URLs
-//     lang, // Language
-//     paymentPageCreated // Callback function
-// );
+// module.exports = Paytabs;

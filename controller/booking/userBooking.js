@@ -619,9 +619,9 @@ const cancelledTripbeforestart = async function(req, res) {
             await sendNotification(userFcmToken, notificationMessage);
         }
         if (global.io) {
-            global.io.emit(`trip/${tripId}`, booking);
+            global.io.emit('trip', booking);
         }
-        const trips = await bookModel.find({ status: 'pending' });
+        const trips = await bookModel.find({ status: 'cancelled' });
         const tripsSocket = trips.map(trip => trip.toObject());
         if (global.io) {
             global.io.emit('get-trips', { trips: tripsSocket });
@@ -1386,6 +1386,7 @@ const getAccepted = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
 const userWallet = async function(req, res) {
     const id = req.params.id;
     const { value, driverId } = req.body;
@@ -1430,7 +1431,6 @@ const userWallet = async function(req, res) {
         });
 
     } catch (error) {
-        // Log and return any server error
         console.log(error);
         res.status(500).json({ message: error.message });
     }
@@ -1452,6 +1452,39 @@ const getUserWallet = async function(req, res){
     }
 }
 
+const commision = async function(req, res) {
+    const { driverId, value } = req.body;
+    try {
+        // Find the driver by ID
+        const driver = await Driver.findOne({ _id: driverId });
+        if (!driver) {
+            return res.status(404).json({ message: "Driver Not Found" });
+        }
+
+        // Ensure the driver has a wallet field
+        if (driver.wallet === undefined || driver.wallet === null) {
+            return res.status(400).json({ message: "Wallet Not Found or Invalid for this Driver" });
+        }
+
+        // Ensure the value being deducted does not cause negative balance
+        if (driver.wallet < value) {
+            return res.status(400).json({ message: "Insufficient funds in wallet" });
+        }
+
+        // Subtract the commission from the driver's wallet
+        const updatedDriver = await Driver.findOneAndUpdate(
+            { _id: driverId },
+            { $inc: { wallet: -value } },  // Use $inc to safely decrement the wallet
+            { new: true }  // Return the updated document
+        );
+
+        res.status(200).json({ driver: updatedDriver });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 
 const driverWallet = async function(req, res) {
     const id = req.params.id;
@@ -1464,10 +1497,10 @@ const driverWallet = async function(req, res) {
             return res.status(404).json({ message: "Driver Not Found" });
         }
 
-        // Update the driver's wallet with the new value
+        // Update the driver's wallet by adding the new value to the existing wallet balance
         const updatedDriverWallet = await Driver.findOneAndUpdate(
             { _id: id },
-            { wallet: driverFound + value }, // Set the driver's wallet to 'value'
+            { wallet: driverFound.wallet + value }, // Access 'wallet' field and add 'value'
             { new: true } // Return the updated document
         );
 
@@ -1502,6 +1535,8 @@ const driverWallet = async function(req, res) {
         res.status(500).json({ message: error.message });
     }
 };
+
+
 
 const getdriverWallet = async function(req, res){
     const id = req.params.id;
@@ -1840,6 +1875,6 @@ module.exports = {
     getTripDriver,
     offer,
     chating,
-    addCommentDriver
-
+    addCommentDriver,
+    commision
 };

@@ -43,7 +43,8 @@ const {
     getTripDriver,
     offer,
     chating,
-    addCommentDriver
+    addCommentDriver,
+    commision
 } = require('../../controller/booking/userBooking');
 const {
     addOffer,
@@ -102,4 +103,5 @@ router.get('/get-trips', getTripDriver);
 router.post('/add-offer', offer);
 router.post('/chating', chating);
 router.post('/user-comment', addCommentDriver);
+router.patch('/commision', commision);
 module.exports = router;

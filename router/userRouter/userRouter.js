@@ -6,7 +6,8 @@ const {
     patchRole,
     deleteUser,
     getSupports,
-    siginupSupport
+    siginupSupport,
+    DeleteUser
 } = require('../../controller/userController/support');
 // Sign-up route
 router.post('/signup',upload.single('profile_image'), signUp);
@@ -22,5 +23,6 @@ router.patch('/handle-token/:id', handleToken);
 router.patch('/patchRole', patchRole);
 router.delete('/delete-permission/:id', deleteUser);
 router.get('/get_supports', getSupports);
-router.post('/support_signup', siginupSupport)
+router.post('/support_signup', siginupSupport);
+router.delete('/delete-user/:id', DeleteUser)
 module.exports = router;

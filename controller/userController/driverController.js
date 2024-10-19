@@ -2,9 +2,10 @@ const Driver = require('../../model/regestration/driverModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const crypto = require('crypto');
 const driverFind = require('../../model/booking/driversDestination');
 //import upload from '../../middlewares/fiels'; // Import the upload middleware
-
+require('dotenv').config(); // Load environment variables
 // Sign-up function
 const signup = async function(req, res) {
     try {
@@ -327,6 +328,78 @@ const handleToken = async function (req, res) {
 };
 
 
+const nodemailer = require('nodemailer');
+let verificationCodes = {}; 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'fliegrtest@gmail.com', 
+        pass: 'FadyFlieger320',
+    },
+});
+
+const sendVerification = async function(req, res){
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+    const verificationCode = crypto.randomBytes(3).toString('hex'); // A 6-character code
+    verificationCodes[email] = verificationCode;
+    const mailOptions = {
+        from: 'fliegrtest@gmail.com',
+        to: email,
+        subject: 'Password Reset Verification Code',
+        text: `Your verification code is: ${verificationCode}`,
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: error.message });
+    }
+        console.log('Email sent: ' + info.response);
+        res.status(200).json({ message: 'Verification code sent to your email' });
+    });
+}
+const verifyCode = (req, res) => {
+    const { email, code } = req.body;
+    const storedCode = verificationCodes[email];
+    if (!storedCode) {
+        return res.status(400).json({ message: "Verification code expired or not found" });
+    }
+    if (parseInt(code) === storedCode) {
+        delete verificationCodes[email];
+        return res.status(200).json({ message: "Verification successful" });
+    } else {
+        return res.status(400).json({ message: "Invalid verification code" });
+    }
+};
+
+// const DeleteUser = async function(req, res) {
+//     const userId = req.params.id;
+//     try {
+//         // Check for authentication (pseudo-code)
+//         // const isAuthorized = await checkUserAuthorization(req.user);
+//         // if (!isAuthorized) return res.status(403).json({ message: 'Not authorized' });
+
+//         const user = await Driver.findByIdAndDelete(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: "User Not Found" });
+//         }
+
+//         // Optionally delete related data (pseudo-code)
+//         // await deleteRelatedData(userId);
+
+//         // Log the deletion
+//         console.log(`User with ID ${userId} deleted.`);
+
+//         res.status(200).json({ message: "User Deleted Successfully" });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ message: error.message });
+//     }
+// }
+
 module.exports = {
     signup,
     login,
@@ -335,5 +408,7 @@ module.exports = {
     DeleteUser,
     patchAlerts,
     driverLocation,
-    handleToken
+    handleToken,
+    sendVerification,
+    verifyCode
 };
