@@ -264,6 +264,7 @@ app.get('/getChats', getChatsWithUserData, (req, res) => {
 });
 
 const data = require('./middlewares/fiels');
+const supportModel = require("./model/regestration/support");
 app.post('/sendMessage', data.array('media', 5), async (req, res) => {
   try {
     const { chatId, userId, sender, message } = req.body;
@@ -362,8 +363,8 @@ app.post('/startChat', async (req, res) => {
       body: 'A new user is waiting in the queue.',
     };
     for (const supportUser of supportDocs) {
-      if (supportUser.supportFCMToken) {
-        sendNotification(supportUser.supportFCMToken, notificationMessage);
+      if (supportUser.adminFCMToken) {
+        sendNotification(supportUser.adminFCMToken, notificationMessage);
       }
     }
 
@@ -444,6 +445,44 @@ app.get('/chat/:id', async (req, res) => {
   }
 });
 
+const updateFCMToken = async (model, adminId, fcmToken, res) => {
+  try {
+    // Validate FCM token
+    if (!fcmToken) {
+      return res.status(400).json({ message: "FCM token is required" });
+    }
+
+    // Find admin/support by ID
+    const admin = await model.findOne({ _id: adminId });
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    // Update FCM token and save
+    admin.adminFCMToken = fcmToken;
+    await admin.save();
+
+    return res.status(200).json({ message: "FCM token updated successfully" });
+  } catch (error) {
+    console.error("Error updating FCM token:", error);
+    return res.status(500).json({ message: "An error occurred while updating the FCM token" });
+  }
+};
+
+// Routes
+app.post('/updateAdmintoken/:id', async (req, res) => {
+  const adminId = req.params.id;
+  const { fcmToken } = req.body;
+
+  await updateFCMToken(AuthAdmin, adminId, fcmToken, res);
+});
+
+app.post('/updateSupporttoken/:id', async (req, res) => {
+  const adminId = req.params.id;
+  const { fcmToken } = req.body;
+
+  await updateFCMToken(supportModel, adminId, fcmToken, res);
+});
 
 // Start the server
 const PORT = process.env.PORT || 3000;

@@ -6,10 +6,14 @@ admin.initializeApp({
 });
 
 const sendNotification = async (token, message, retries = 3) => {
+    const route = "/supportScreen";
     const payload = {
         notification: {
             title: message.title,
             body: message.body,
+        },
+        data: {
+            route: route, // Custom data must be added here
         },
         token: token,
     };
@@ -24,14 +28,11 @@ const sendNotification = async (token, message, retries = 3) => {
         // Handle invalid FCM token or invalid argument errors gracefully
         if (error.errorInfo && error.errorInfo.code === 'messaging/invalid-argument') {
             console.log(`The token ${token} is invalid or not a valid FCM registration token.`);
-            // Do not throw an error, silently skip the invalid token
             return { success: false, message: 'Invalid FCM registration token' };
         }
 
-        // Handle token not registered
         if (error.errorInfo && error.errorInfo.code === 'messaging/registration-token-not-registered') {
             console.log(`The token ${token} is no longer valid.`);
-            // Do not throw an error, silently skip the invalid token
             return { success: false, message: 'Token is no longer valid' };
         }
 
@@ -39,14 +40,10 @@ const sendNotification = async (token, message, retries = 3) => {
         if (error.code === 'messaging/internal-error' && retries > 0) {
             console.log(`Retrying... (${3 - retries + 1})`);
 
-            // Wait for a short delay before retrying
             await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Retry sending the notification
             return sendNotification(token, message, retries - 1);
         }
 
-        // For all other errors, throw the error
         throw error;
     }
 };

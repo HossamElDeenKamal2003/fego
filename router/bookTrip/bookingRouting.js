@@ -99,7 +99,7 @@ router.patch('/user-rate', userRate);
 router.patch('/update-arriving-time', handleArrivingTime);
 router.patch('/update-driver-wallet/:id', driverWallet);
 router.get('/get-driver-wallet/:id', getdriverWallet);
-router.get('/get-trips', getTripDriver);
+router.get('/get-trips/:type', getTripDriver);
 router.post('/add-offer', offer);
 router.post('/chating', chating);
 router.post('/user-comment', addCommentDriver);

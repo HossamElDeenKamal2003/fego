@@ -12,7 +12,9 @@ const contactschema = new mongoose.Schema({
     },
     question: {
         type: String
-    }
+    },
+      file: { type: String }, // Store file path or URL
+  createdAt: { type: Date, default: Date.now },
 });
 
 

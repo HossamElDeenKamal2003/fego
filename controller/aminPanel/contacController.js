@@ -1,22 +1,28 @@
 const contactModel = require('../../model/contactUs');
 
-const addContact = async function(req, res){
-    const { username, phoneNumber, whatsApp, question } = req.body;
-    try{
-        const newContact = new contactModel({
-            username,
-            phoneNumber,
-            whatsApp,
-            question
-        });
-        await newContact.save();
-        res.status(200).json({ contact: newContact })
-    }
-    catch(error){
-        console.log(error);
-        res.status(500).json({ messsage: error.message });
-    }
-}
+const addContact = async function (req, res) {
+  const { username, phoneNumber, whatsApp, question } = req.body;
+
+  if (!username || !phoneNumber || !question) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    const newContact = new contactModel({
+      username,
+      phoneNumber,
+      whatsApp,
+      question,
+      file: req.file ? req.file.path : null, // Save file path if uploaded
+    });
+    await newContact.save();
+    res.status(200).json({ contact: newContact });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to save contact. Please try again." });
+  }
+};
+
 
 const getContact = async function(req, res){
     try{

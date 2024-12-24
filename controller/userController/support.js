@@ -3,13 +3,14 @@ const support = require('../../model/regestration/support');
 const bcrypt = require('bcrypt');
 
 const siginupSupport = async function(req, res) {
-    const { username, role, email, phoneNumber, password } = req.body;
+    const { username, role, email, phoneNumber, password, adminFCMToken } = req.body;
     try {
         const newSupport = new support({
             username, 
             role,
             email, 
             phoneNumber,
+            adminFCMToken,
             password: bcrypt.hashSync(password, 10)
         });
         await newSupport.save();

@@ -6,7 +6,7 @@ const supportSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        default: ""
+        default: "",
     },
     email: {
         type: String,
@@ -15,8 +15,17 @@ const supportSchema = new mongoose.Schema({
         type: String,
     },
     password: {
-        type: String
+        type: String,
+    },
+    adminFCMToken: { // Add this field
+        type: String,
+        default: ""
+    },
+    supportFCMToken: {
+        type: String,
+        default: ""
     }
 });
-const supportModel = new mongoose.model('support', supportSchema);
+
+const supportModel = mongoose.model('support', supportSchema);
 module.exports = supportModel;

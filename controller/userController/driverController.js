@@ -7,6 +7,23 @@ const driverFind = require('../../model/booking/driversDestination');
 //import upload from '../../middlewares/fiels'; // Import the upload middleware
 require('dotenv').config(); // Load environment variables
 // Sign-up function
+const handleFileUpload = (files, fieldName) => {
+    return files?.[fieldName] ? files[fieldName][0].path : null;
+};
+
+const checkRequiredFields = (data) => {
+    const { profile_image, username, email, carModel, licence_expire_date, password, id, national_front, national_back, national_selfie } = data;
+    return !profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id || !national_front || !national_back || !national_selfie;
+};
+
+const checkImageFields = (licenseImage, driver_licence_image) => {
+    return !licenseImage || !driver_licence_image;
+};
+
+const checkExistingUser = async (email, phoneNumber, id) => {
+    return await Driver.findOne({ $or: [{ email }, { phoneNumber }, { id }] });
+};
+
 const signup = async function(req, res) {
     try {
         const {
@@ -25,31 +42,44 @@ const signup = async function(req, res) {
             driverFCMToken,
             wallet,
             comments
-            
         } = req.body;
 
-        // Profile image should be declared after req.files is available
-        const licenseImage = req.files?.['licenseImage'] ? req.files['licenseImage'][0].path : null;
-        const driver_licence_image = req.files?.['driver_licence_image'] ? req.files['driver_licence_image'][0].path : null;
-        const profile_image = req.files?.['profile_image'] ? req.files['profile_image'][0].path : null;
-        const national_front = req.files?.['national_front'] ? req.files['national_front'][0].path : null;
-        const national_back = req.files?.['national_back'] ? req.files['national_back'][0].path : null;
-        const national_selfie = req.files?.['national_selfie'] ? req.files['national_selfie'][0].path : null;
-        if (!profile_image || !username || !email || !carModel || !licence_expire_date || !password || !id || !national_front ||!national_back || !national_selfie) {
+        // File handling
+        const licenseImage = handleFileUpload(req.files, 'licenseImage');
+        const driver_licence_image = handleFileUpload(req.files, 'driver_licence_image');
+        const profile_image = handleFileUpload(req.files, 'profile_image');
+        const national_front = handleFileUpload(req.files, 'national_front');
+        const national_back = handleFileUpload(req.files, 'national_back');
+        const national_selfie = handleFileUpload(req.files, 'national_selfie');
+
+        // Check if required fields are missing
+        if (checkRequiredFields({ profile_image, username, email, carModel, licence_expire_date, password, id, national_front, national_back, national_selfie })) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        if (!licenseImage || !driver_licence_image) {
+        // Check if images are missing
+        if (checkImageFields(licenseImage, driver_licence_image)) {
             return res.status(400).json({ message: 'All images are required' });
         }
 
-        const existingUser = await Driver.findOne({ $or: [{ email }, { phoneNumber }, { id }] });
+        // Check if user already exists
+        const existingUser = await checkExistingUser(email, phoneNumber, id);
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+            let existingField = '';
+            if (existingUser.email === email) {
+                existingField = 'Email already exists';
+            } else if (existingUser.phoneNumber === phoneNumber) {
+                existingField = 'Phone number already exists';
+            } else if (existingUser.id === id) {
+                existingField = 'ID already exists';
+            }
+            return res.status(400).json({ message: existingField });
         }
 
+        // Hash password
         const hashedPassword = bcrypt.hashSync(password, 10);
 
+        // Create new driver
         const newDriver = new Driver({
             profile_image,
             username,
@@ -74,6 +104,7 @@ const signup = async function(req, res) {
 
         await newDriver.save();
 
+        // Create driver location
         const driverLocation = new driverFind({
             driverId: newDriver._id,
             profile_image: newDriver.profile_image,
@@ -93,6 +124,7 @@ const signup = async function(req, res) {
 
         await driverLocation.save();
 
+        // Generate JWT token
         const token = jwt.sign({ id: newDriver._id, username: newDriver.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         return res.status(201).json({
@@ -140,29 +172,31 @@ const login = async function(req, res) {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-            const valid = bcrypt.compareSync(password, user.password);
+        const valid = bcrypt.compareSync(password, user.password);
         if (!valid) {
             return res.status(401).json({ message: 'Incorrect password' });
         }
 
-        const token = jwt.sign({ id: user._id, username: user.username }, process.env.JWT_SECRET || "your_jwt_secret_key", { expiresIn: '1h' });
-
-        return res.status(200).json({
-            message: 'Login successful',
-            token,
-            driver: {
-                id: user._id,
-                profile_image: user.profile_image,
-                username: user.username,
-                email: user.email,
-                phoneNumber: user.phoneNumber,
-                carModel: user.carModel,
-                licenseImage: user.licenseImage,
-                driver_licence_image: user.driver_licence_image,
-                licence_expire_date: user.licence_expire_date,
-                vehicleType: user.vehicleType
-            }
-        });
+        if(user.block === true){
+            return res.status(200).json({
+                message: 'Login successful',
+                driver: {
+                    id: user._id,
+                    profile_image: user.profile_image,
+                    username: user.username,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber,
+                    carModel: user.carModel,
+                    licenseImage: user.licenseImage,
+                    driver_licence_image: user.driver_licence_image,
+                    licence_expire_date: user.licence_expire_date,
+                    vehicleType: user.vehicleType
+                }
+            });
+        }
+        else{
+            return res.status(400).json({message: "You Are Blocked"});
+        }
     //res.status(401).json({message: "Not Authorized to login"});
     } catch (error) {
         console.error('Login error:', error);
@@ -330,37 +364,75 @@ const handleToken = async function (req, res) {
 
 const nodemailer = require('nodemailer');
 let verificationCodes = {}; 
+
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "Gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
-        user: 'fliegrtest@gmail.com', 
-        pass: 'FadyFlieger320',
+        user: 'boshtahoma@gmail.com', 
+        pass: 'mbehwbyoeinofdvz',
     },
 });
 
-const sendVerification = async function(req, res){
-    const { email } = req.body;
+function generateNumericOTP() {
+    return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit number
+}
 
+const sendVerification = async function(req, res) {
+    const { email } = req.body;
     if (!email) {
         return res.status(400).json({ message: 'Email is required' });
     }
-    const verificationCode = crypto.randomBytes(3).toString('hex'); // A 6-character code
-    verificationCodes[email] = verificationCode;
+    
+    const verificationCode = generateNumericOTP(); // Generate numeric OTP
+    verificationCodes[email] = verificationCode; // Store it
+    
     const mailOptions = {
-        from: 'fliegrtest@gmail.com',
+        from: 'boshtahoma@gmail.com',
         to: email,
         subject: 'Password Reset Verification Code',
         text: `Your verification code is: ${verificationCode}`,
     };
+
     transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-        console.error('Error sending email:', error);
-        return res.status(500).json({ message: error.message });
-    }
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).json({ message: error.message });
+        }
         console.log('Email sent: ' + info.response);
         res.status(200).json({ message: 'Verification code sent to your email' });
     });
 }
+
+const sendVerificationForgetPass = async function(req, res) {
+    const { email } = req.body;
+    const emailFound = await Driver.findOne({ email: email });
+    if (!emailFound) {
+        return res.status(400).json({ message: 'Email not found' });
+    }
+
+    const verificationCode = generateNumericOTP(); // Generate numeric OTP
+    verificationCodes[email] = verificationCode; // Store it
+
+    const mailOptions = {
+        from: 'boshtahoma@gmail.com',
+        to: email,
+        subject: 'Password Reset Verification Code',
+        text: `Your verification code is: ${verificationCode}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).json({ message: error.message });
+        }
+        console.log('Email sent: ' + info.response);
+        res.status(200).json({ message: 'Verification code sent to your email' });
+    });
+}
+
 const verifyCode = (req, res) => {
     const { email, code } = req.body;
     const storedCode = verificationCodes[email];
@@ -368,37 +440,51 @@ const verifyCode = (req, res) => {
         return res.status(400).json({ message: "Verification code expired or not found" });
     }
     if (parseInt(code) === storedCode) {
-        delete verificationCodes[email];
+        delete verificationCodes[email]; // Remove used code
         return res.status(200).json({ message: "Verification successful" });
     } else {
         return res.status(400).json({ message: "Invalid verification code" });
     }
 };
+const forgetPassword = async function(req, res){
+    const { email, newPass } = req.body;
+    try{
+        const password = await Driver.findOne({ email: email});
+        if(!password){
+            return res.status(404).json({ message: "Email Not Found" });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPass, salt);
+        const updatePassword = await Driver.findOne(
+            { email: email },
+            { password: newPass},
+            { new: true },
+        );
+        if(!updatePassword){
+            return res.status(400).json({ message: "Failed to set password" });
+        }
+        res.status(200).json({ message: "Password Set Successfully" });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
-// const DeleteUser = async function(req, res) {
-//     const userId = req.params.id;
-//     try {
-//         // Check for authentication (pseudo-code)
-//         // const isAuthorized = await checkUserAuthorization(req.user);
-//         // if (!isAuthorized) return res.status(403).json({ message: 'Not authorized' });
-
-//         const user = await Driver.findByIdAndDelete(userId);
-//         if (!user) {
-//             return res.status(404).json({ message: "User Not Found" });
-//         }
-
-//         // Optionally delete related data (pseudo-code)
-//         // await deleteRelatedData(userId);
-
-//         // Log the deletion
-//         console.log(`User with ID ${userId} deleted.`);
-
-//         res.status(200).json({ message: "User Deleted Successfully" });
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ message: error.message });
-//     }
-// }
+const checkEmail = async function(req, res){
+    const { email } = req.body;
+    try{
+        const found = await Driver.findOne({ email: email });
+        if(!found){
+            return res.status(404).json({ message: "Email Not Found" });
+        }
+        res.status(200).json({ message: "Ok" });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
 module.exports = {
     signup,
@@ -410,5 +496,8 @@ module.exports = {
     driverLocation,
     handleToken,
     sendVerification,
-    verifyCode
+    verifyCode,
+    sendVerificationForgetPass,
+    forgetPassword,
+    checkEmail
 };

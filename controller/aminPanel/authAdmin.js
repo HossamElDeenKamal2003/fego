@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 const signup = async function(req, res) {
     try {
-        const { username, password, secretKey } = req.body;
+        const { username, password, secretKey, adminFCMToken } = req.body;
 
         // Check if all required fields are provided
         if (!username || !password || !secretKey) {
@@ -17,7 +17,8 @@ const signup = async function(req, res) {
             const newAdmin = new authAdmin({
                 username: username,
                 role: "admin",
-                password: hashedPassword
+                password: hashedPassword,
+                adminFCMToken
             });
             await newAdmin.save();
             return res.status(200).json({ message: "Admin saved successfully" });

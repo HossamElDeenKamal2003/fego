@@ -23,7 +23,7 @@ router.get('/get-location', getlocation);
 router.get('/get-driver/:id', getDriver);
 router.get('/get-user/:id', getUser);
 router.get('/get-trips', getTrips);
-router.post('/add-contact', addContact);
+router.post("/add-contact", upload.single("file"), addContact);
 router.get('/get-contacts', getContact);
 router.delete('/delete-contact/:id', deleteContact);
 router.post('/panners', upload.array('images', 100), addPanner); 

@@ -6,17 +6,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         // required: true
     },
-    role:{
+    role: {
         type: String
     },
     userFCMToken: {
         type: String,
         default: null,
     },
-    username: {
+    username: {  // Renaming "username" to "userName"
         type: String,
-        required: true,
-        unique: true
     },
     email: {
         type: String,
@@ -27,10 +25,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-    },
-    password: {
-        type: String,
-        required: true,
     },
     block: {
         type: Boolean,
@@ -52,34 +46,15 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    rate: {            // Add this field
+    rate: {            
         type: Number,
         default: 0
     },
-    totalRatings: {     // Add this field
+    totalRatings: {     
         type: Number,
         default: 0
     }
 });
-
-// Hash password before saving
-// userSchema.pre('save', async function (next) {
-// if (!this.isModified('password')) {
-//     return next();
-// }
-// try {
-//     const salt = await bcrypt.genSalt(10);
-//     this.password = await bcrypt.hash(this.password, salt);
-//     next();
-// } catch (error) {
-//     next(error);
-// }
-// });
-
-// // Compare passwords
-// userSchema.methods.comparePassword = async function (candidatePassword) {
-// return await bcrypt.compare(candidatePassword, this.password);
-// };
 
 const User = mongoose.model('User', userSchema);
 
