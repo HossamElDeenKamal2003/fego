@@ -100,7 +100,7 @@ const deleteDriver = async function(req, res){
     try {
         const deletedDriver = await driversModel.findOneAndDelete({_id: userId});
         if (!deletedDriver) {
-            return res.status(404).json({message: "Driver not found"});
+            return res.status(400).json({message: "Driver not found"});
         }
         res.status(200).json({message: "User Deleted Successfully"});
     } catch(error) {

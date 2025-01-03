@@ -136,12 +136,7 @@ app.get('/home', (req, res)=>{
 app.get('/privacy-policy', (req, res) => {
     res.render(path.join(__dirname, 'views', 'index.ejs'));
   });
-  
-
 const axios = require('axios');
-
-
-
 app.post('/pay', async (req, res) => {
     const { amount, currency, customerDetails } = req.body;
 
@@ -154,8 +149,8 @@ app.post('/pay', async (req, res) => {
         cart_currency: currency,
         cart_amount: amount,
         customer_details: customerDetails,
-        return: 'https://backend-5ig1.onrender.com/payment-result', 
-        callback: 'https://backend-5ig1.onrender.com/payment-callback'
+        return: 'https://backend.fego-rides.com/payment-result', 
+        callback: 'https://backend.fego-rides.com/payment-callback'
     };
 
     try {
@@ -174,28 +169,62 @@ app.post('/pay', async (req, res) => {
 
 
 // Payment result route to handle the return from PayTabs
-app.post('/payment-result', (req, res) => {
-    // Log the request body to inspect what is returned by PayTabs
-    console.log('Payment result data:', req.body);
+app.post('/payment-result', async (req, res) => {
+  console.log('Payment result data:', req.body);
 
-    try {
-        // Extract 'tran_status' (or the correct field) from the request body
-        const tranStatus = req.body.tran_status; // Adjust according to PayTabs response format
-        
-        if (tranStatus === 'A') { // Assuming 'A' means the payment was approved
-            res.json({ message: 'Payment succeeded' });
-        } else if (tranStatus === 'D') { // Assuming 'D' means payment was declined
-            return res.status(400).json({ message: 'Payment declined. Please try again.' });
-        } else if (tranStatus === 'V') { // Assuming 'V' means the payment was voided
-            return res.status(400).json({ message: 'Payment voided.' });
-        } else {
-            res.status(400).json({ message: 'Payment failed or unknown status' });
-        }
-    } catch (error) {
-        console.error("Error verifying payment result:", error);
-        res.status(500).json({ message: error.message });
-    }
+  try {
+      const { tran_status, cart_amount, customer_details } = req.body; // Adjust keys if needed
+
+      if (tran_status === 'A') { // 'A' indicates approved payment
+          console.log('✅ Payment approved');
+
+          // Extract driver ID from customer details
+          const driverId = customer_details?.driverId; // Ensure driverId is sent in customer_details
+          if (!driverId) {
+              return res.status(400).json({ message: 'Driver ID is missing in customer details' });
+          }
+
+          // Fetch the driver from the database
+          const driver = await Driver.findOne({ _id: driverId });
+          if (!driver) {
+              return res.status(404).json({ message: 'Driver not found' });
+          }
+
+          // Update driver's wallet and updateWallettime
+          driver.wallet = (driver.wallet || 0) + parseFloat(cart_amount); // Ensure amount is added correctly
+          driver.updateWallettime = new Date();
+
+          await driver.save();
+
+          console.log('✅ Driver wallet updated successfully:', { wallet: driver.wallet, updateWallettime: driver.updateWallettime });
+
+          return res.status(200).json({ 
+              message: 'Payment succeeded and wallet updated', 
+              wallet: driver.wallet, 
+              updateWallettime: driver.updateWallettime 
+          });
+      } 
+      
+      else if (tran_status === 'D') {
+          console.warn('⚠️ Payment declined');
+          return res.status(400).json({ message: 'Payment declined. Please try again.' });
+      } 
+      
+      else if (tran_status === 'V') {
+          console.warn('⚠️ Payment voided');
+          return res.status(400).json({ message: 'Payment voided.' });
+      } 
+      
+      else {
+          console.warn('⚠️ Unknown payment status');
+          return res.status(400).json({ message: 'Payment failed or unknown status' });
+      }
+  } catch (error) {
+      console.error('❌ Error verifying payment result:', error);
+      return res.status(500).json({ message: 'An error occurred while processing payment result', error: error.message });
+  }
 });
+
 const ChatModel = require('./model/chatSupport');
 const User = require('./model/regestration/userModel');
 const Driver = require('./model/regestration/driverModel');

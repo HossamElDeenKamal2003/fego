@@ -363,6 +363,7 @@ const handleToken = async function (req, res) {
 
 
 const nodemailer = require('nodemailer');
+const { constrainedMemory } = require('process');
 let verificationCodes = {}; 
 
 const transporter = nodemailer.createTransport({
@@ -486,6 +487,36 @@ const checkEmail = async function(req, res){
     }
 }
 
+const updatewalletType = async function (req, res) {
+    const { id } = req.body;
+    try {
+        // Fetch the current driver to check walletType
+        const driver = await Driver.findById(id);
+        if (!driver) {
+            return res.status(404).json({ message: "Driver not found" });
+        }
+
+        // Toggle walletType based on its current value
+        const newWalletType = driver.walletType === "1" ? "2" : "1";
+
+        // Update the walletType
+        const updateType = await Driver.findByIdAndUpdate(
+            id,
+            { walletType: newWalletType },
+            { new: true }
+        );
+
+        if (!updateType) {
+            return res.status(400).json({ message: "Failed to update Wallet Type" });
+        }
+
+        return res.status(200).json({ driver: updateType });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     signup,
     login,
@@ -499,5 +530,6 @@ module.exports = {
     verifyCode,
     sendVerificationForgetPass,
     forgetPassword,
-    checkEmail
+    checkEmail,
+    updatewalletType
 };

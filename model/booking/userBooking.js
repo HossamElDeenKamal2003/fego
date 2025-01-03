@@ -89,6 +89,10 @@ const bookingSchema = new mongoose.Schema({
     cost: {
         type: Number,
     },
+    abirdPrice: {
+        type: Number,
+        default: 0
+    },
     date: {
         type: String,
         default: dateHandle()
@@ -117,6 +121,9 @@ const bookingSchema = new mongoose.Schema({
         type: String
     },
     encodedPolyline: {
+        type: String
+    },
+    country: {
         type: String
     }
 });

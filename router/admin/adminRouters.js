@@ -14,6 +14,8 @@ router.get('/location/:id', getDriverlocation)
 router.get('/trips', trips);
 router.delete('/delete-user/:id', deleteUser);
 router.delete('/delete-driver/:id', deleteDriver);
+router.get('/delete-driver/:id', deleteDriver);
+router.post('/delete-driver/:id', deleteDriver);
 router.post('/signup', signup);
 router.post('/signin', signin);
 router.patch('/patch-time-distance', updateProperity);

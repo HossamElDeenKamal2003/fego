@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, updatePassword, forgetPassword, checkEmail,sendVerification, verifyCode, sendVerificationForgetPass , patchBlock, handleToken, DeleteUser, patchAlerts, driverLocation } = require('../../controller/userController/driverController');
+const { signup, login, updatewalletType, updatePassword, forgetPassword, checkEmail,sendVerification, verifyCode, sendVerificationForgetPass , patchBlock, handleToken, DeleteUser, patchAlerts, driverLocation } = require('../../controller/userController/driverController');
 const upload = require('../../middlewares/fiels'); 
 router.post('/driversignup', upload.fields([{ name: 'licenseImage', maxCount: 1 }, { name: 'driver_licence_image', maxCount: 1 },{ name: 'profile_image', maxCount: 1 }, {name: 'national_front', maxCount: 1}, {name: 'national_back', maxCount: 1}, {name: 'national_selfie', maxCount: 1}]), signup);
 router.post('/driverlogin', login);
@@ -15,5 +15,5 @@ router.post('/verify-code', verifyCode);
 router.post('/sendVerificationForgetPass', sendVerificationForgetPass );
 router.patch('/forgetPassword', forgetPassword);
 router.post('/check-email', checkEmail);
-
+router.patch('/updatewalletType', updatewalletType);
 module.exports = router;

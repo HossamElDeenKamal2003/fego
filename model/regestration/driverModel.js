@@ -93,6 +93,12 @@ const driverSchema = new mongoose.Schema({
     },
     comments: {
         type: [String]
+    },
+    walletType: {
+        type: String,
+    },
+    updateWallettime:{
+        type: Date,
     }
 });
 
